@@ -1,0 +1,133 @@
+.dashboard {
+  display: flex;
+  gap: 24px;
+  height: 100%;
+  padding: 24px;
+  overflow: hidden;
+}
+
+.dashboard-left {
+  flex: 0 0 42%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.dashboard-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.dashboard-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dashboard-section-header .more-btn {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.dashboard-section-header .more-btn:hover {
+  background: var(--bg-input);
+  color: var(--text-primary);
+}
+
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--green-primary);
+}
+
+.dashboard-patient-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Active tasks scroll row */
+.dashboard-tasks-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dashboard-tasks-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.task-mini-card {
+  min-width: 180px;
+  max-width: 220px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: var(--radius-card);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.task-mini-card:hover {
+  transform: translateY(-2px);
+}
+.task-mini-card.card-dark {
+  box-shadow: none;
+}
+.task-mini-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.task-mini-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: inherit;
+}
+.task-mini-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  opacity: 0.6;
+}
+.task-mini-card.card-dark .task-mini-title {
+  color: var(--text-on-dark);
+}
+.task-mini-card.card-dark .task-mini-meta {
+  color: var(--text-on-dark-muted);
+}
+.task-mini-card.card-dark .badge-stat {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* Vitals row */
+.dashboard-vitals-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}

@@ -1,0 +1,135 @@
+.vitals-page {
+  padding: 24px;
+  height: 100%;
+  overflow-y: auto;
+}
+.vitals-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.vitals-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vitals-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.vitals-select {
+  padding: 10px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-input);
+  border: 1px solid rgba(0,0,0,0.08);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-family: var(--font-primary);
+  min-width: 300px;
+  cursor: pointer;
+  appearance: none;
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23A0ADA0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+.vitals-select:focus {
+  border-color: var(--green-primary);
+  outline: none;
+}
+
+.vitals-save-msg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--green-light);
+  color: var(--green-text);
+  border-radius: var(--radius-input);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.vitals-patient-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+.vitals-pat-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.vitals-pat-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.vitals-pat-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.vital-detail-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.vital-detail-value {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.vitals-form {
+  padding: 24px;
+}
+.vitals-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.vitals-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.vitals-form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .vitals-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .vitals-form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
