@@ -1,0 +1,269 @@
+/* ============================================================
+   triage.os — UI Component Styles
+   ============================================================ */
+
+/* --- StatCard --- */
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.stat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.stat-card-icon {
+  color: var(--text-muted);
+}
+.stat-card-value {
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+}
+.stat-card-subtext {
+  font-size: 12px;
+}
+
+/* --- VitalMiniCard --- */
+.vital-mini-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+.vital-mini-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.vital-mini-value {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.1;
+  transition: color 0.5s ease;
+}
+.vital-mini-value.value-updating {
+  animation: count-tick 0.4s ease;
+}
+.vital-sparkline {
+  width: 100%;
+  height: 36px;
+  margin-top: 4px;
+}
+.vital-mini-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* --- ScheduleCard --- */
+.schedule-card {
+  border-radius: var(--radius-card);
+}
+.schedule-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.schedule-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.schedule-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-on-dark);
+}
+.schedule-shift-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--green-primary);
+  font-weight: 500;
+}
+.schedule-shift-divider {
+  opacity: 0.4;
+}
+.schedule-arrows {
+  display: flex;
+  gap: 4px;
+}
+.schedule-arrow-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.schedule-arrow-btn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+}
+.schedule-arrow-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.schedule-days {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.schedule-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: var(--radius-day);
+  background: rgba(255,255,255,0.06);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-width: 56px;
+  flex: 1;
+  flex-shrink: 0;
+}
+.schedule-day:hover {
+  background: rgba(255,255,255,0.12);
+}
+.schedule-day.active {
+  background: var(--green-primary);
+}
+.schedule-day-name {
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.schedule-day.active .schedule-day-name {
+  color: var(--text-primary);
+}
+.schedule-day-date {
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.5);
+}
+.schedule-day.active .schedule-day-date {
+  color: var(--text-primary);
+}
+.schedule-day-tasks {
+  font-size: 9px;
+  color: rgba(255,255,255,0.4);
+  font-weight: 500;
+}
+.schedule-day.active .schedule-day-tasks {
+  color: rgba(45,66,41,0.7);
+}
+
+/* --- TriageChart --- */
+.triage-chart {
+  padding: var(--sp-5);
+}
+.triage-chart-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.triage-chart-score {
+  margin-top: 4px;
+}
+.triage-chart-meta {
+  display: flex;
+  align-items: center;
+}
+.triage-chart-container {
+  width: 100%;
+}
+.chart-tooltip {
+  padding: 8px 12px !important;
+  box-shadow: var(--shadow-elevated) !important;
+}
+.chart-tooltip-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--green-primary);
+}
+
+/* --- CTA Card --- */
+.cta-card {
+  background: var(--green-primary);
+  border-radius: var(--radius-modal);
+  padding: var(--sp-6);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.cta-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(143, 209, 79, 0.3);
+}
+.cta-blob {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  animation: blob-drift 8s ease-in-out infinite;
+}
+.blob-1 {
+  width: 120px;
+  height: 120px;
+  top: -30px;
+  right: -20px;
+  animation-delay: 0s;
+}
+.blob-2 {
+  width: 80px;
+  height: 80px;
+  bottom: -20px;
+  left: 30px;
+  animation-delay: -2s;
+  background: rgba(255,255,255,0.10);
+}
+.blob-3 {
+  width: 60px;
+  height: 60px;
+  top: 40%;
+  right: 30%;
+  animation-delay: -4s;
+  background: rgba(45, 66, 41, 0.08);
+}
+.blob-4 {
+  width: 100px;
+  height: 100px;
+  bottom: -40px;
+  right: 20%;
+  animation-delay: -6s;
+  background: rgba(255,255,255,0.08);
+}
+.cta-content {
+  position: relative;
+  z-index: 1;
+  color: var(--text-primary);
+}
+.cta-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 8px 0 4px;
+}
+.cta-desc {
+  font-size: 13px;
+  opacity: 0.8;
+  margin-bottom: 16px;
+}
+.cta-btn {
+  margin-top: 4px;
+}
