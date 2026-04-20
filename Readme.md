@@ -1,0 +1,1 @@
+NurseOS is an AI hospital workflow assistant that runs locally to convert spoken nurse notes into structured handoffs, classify medication urgency, and score patient risk from simulated vitals. It also provides a real-time platform with patient kanban, nurse shift swaps, doctor task panels, and admin dashboards via WebSockets.
