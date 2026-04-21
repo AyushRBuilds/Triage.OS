@@ -1,44 +1,18 @@
 /* ============================================================
-   triage.os — API Service Layer
-   Currently returns mock data. Replace BASE_URL and remove
-   mock imports when backend is ready.
+   triage.os — API Service Layer (Supabase)
+   All functions query the live Supabase database.
+   Real-time subscriptions replace mock setInterval.
    ============================================================ */
 
-import {
-  patients as mockPatients,
-  nurses as mockNurses,
-  tasks as mockTasks,
-  soapNotes as mockSoapNotes,
-  chatMessages as mockChatMessages,
-  shiftSwapRequests as mockShiftSwaps,
-  triageScoreHistory as mockTriageScores,
-  scheduleData as mockSchedule,
-  currentNurse as mockCurrentNurse,
-} from '../data/mockData';
+import { supabase } from './supabaseClient';
 
-// ── Configuration ────────────────────────────────────────────
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-const USE_MOCK = true; // Set to false when backend is ready
+// ══════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════
 
-// ── Generic fetch wrapper ────────────────────────────────────
-async function apiFetch(endpoint, options = {}) {
-  const url = `${BASE_URL}${endpoint}`;
-  const response = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
-  });
-  if (!response.ok) {
-    throw new Error(`API Error: ${response.status} ${response.statusText}`);
-  }
-  return response.json();
-}
-
-// ── Simulate network delay for mock data ─────────────────────
-function mockDelay(data, ms = 200) {
-  return new Promise((resolve) => setTimeout(() => resolve(data), ms));
+function handleError(error, context) {
+  console.error(`[triage.os] ${context}:`, error.message);
+  throw error;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -46,8 +20,17 @@ function mockDelay(data, ms = 200) {
 // ══════════════════════════════════════════════════════════════
 
 export async function getCurrentNurse() {
-  if (USE_MOCK) return mockDelay({ ...mockCurrentNurse });
-  return apiFetch('/auth/me');
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from('nurses')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  if (error) handleError(error, 'getCurrentNurse');
+  return data;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -55,76 +38,104 @@ export async function getCurrentNurse() {
 // ══════════════════════════════════════════════════════════════
 
 export async function getPatients() {
-  if (USE_MOCK) return mockDelay([...mockPatients]);
-  return apiFetch('/patients');
+  const { data, error } = await supabase
+    .from('patients')
+    .select(`
+      *,
+      vitals (*),
+      medications (*),
+      assigned_nurse:nurses!assigned_nurse_id (id, name, initials)
+    `)
+    .order('risk', { ascending: true });
+
+  if (error) handleError(error, 'getPatients');
+
+  // Normalize shape to match the rest of the app
+  return (data || []).map(normalizePatient);
 }
 
 export async function getPatientById(id) {
-  if (USE_MOCK) {
-    const patient = mockPatients.find((p) => p.id === id);
-    return mockDelay(patient || null);
-  }
-  return apiFetch(`/patients/${id}`);
+  const { data, error } = await supabase
+    .from('patients')
+    .select(`
+      *,
+      vitals (*),
+      medications (*),
+      assigned_nurse:nurses!assigned_nurse_id (id, name, initials)
+    `)
+    .eq('id', id)
+    .single();
+
+  if (error) handleError(error, 'getPatientById');
+  return normalizePatient(data);
 }
 
-export async function updatePatientVitals(id, vitals) {
-  if (USE_MOCK) return mockDelay({ success: true, vitals });
-  return apiFetch(`/patients/${id}/vitals`, {
-    method: 'PUT',
-    body: JSON.stringify(vitals),
-  });
+export async function updatePatientVitals(patientId, vitals) {
+  const { data, error } = await supabase
+    .from('vitals')
+    .upsert({ patient_id: patientId, ...vitals, recorded_at: new Date().toISOString() }, {
+      onConflict: 'patient_id',
+    });
+
+  if (error) handleError(error, 'updatePatientVitals');
+  return data;
 }
 
 export async function addPatient(patient) {
-  if (USE_MOCK) return mockDelay({ success: true, id: `P${Date.now()}` });
-  return apiFetch('/patients', {
-    method: 'POST',
-    body: JSON.stringify(patient),
-  });
+  const { data, error } = await supabase
+    .from('patients')
+    .insert([patient])
+    .select()
+    .single();
+
+  if (error) handleError(error, 'addPatient');
+  return data;
 }
 
 export async function reassignPatient(patientId, nurseId) {
-  if (USE_MOCK) return mockDelay({ success: true });
-  return apiFetch(`/patients/${patientId}/reassign`, {
-    method: 'PUT',
-    body: JSON.stringify({ nurseId }),
-  });
+  const { data, error } = await supabase
+    .from('patients')
+    .update({ assigned_nurse_id: nurseId })
+    .eq('id', patientId);
+
+  if (error) handleError(error, 'reassignPatient');
+  return data;
 }
 
 // ══════════════════════════════════════════════════════════════
-// VITALS (WebSocket / Streaming)
+// VITALS — Real-time Supabase Channel
+// Replaces the old setInterval mock.
+// Returns an object with a .close() method for cleanup.
 // ══════════════════════════════════════════════════════════════
 
 export function connectVitalsStream(onMessage) {
-  if (USE_MOCK) {
-    // Simulate WebSocket with setInterval
-    const intervalId = setInterval(() => {
-      const simulatedUpdate = mockPatients.map((p) => ({
-        patientId: p.id,
-        vitals: {
-          hr: p.vitals.hr + Math.round((Math.random() - 0.5) * 4),
-          spo2: Math.min(100, Math.max(70, p.vitals.spo2 + Math.round((Math.random() - 0.5) * 2))),
-          bpSys: p.vitals.bpSys + Math.round((Math.random() - 0.5) * 6),
-          bpDia: p.vitals.bpDia + Math.round((Math.random() - 0.5) * 4),
-          temp: +(p.vitals.temp + (Math.random() - 0.5) * 0.2).toFixed(1),
-          rr: p.vitals.rr + Math.round((Math.random() - 0.5) * 2),
-        },
-        timestamp: new Date().toISOString(),
-      }));
-      onMessage(simulatedUpdate);
-    }, 3000);
+  const channel = supabase
+    .channel('vitals-realtime')
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'vitals' },
+      (payload) => {
+        // Transform payload into the shape the UI expects
+        const update = {
+          patientId: payload.new.patient_id,
+          vitals: {
+            hr: payload.new.hr,
+            spo2: payload.new.spo2,
+            bpSys: payload.new.bp_sys,
+            bpDia: payload.new.bp_dia,
+            temp: payload.new.temp,
+            rr: payload.new.rr,
+          },
+          timestamp: payload.new.recorded_at,
+        };
+        onMessage([update]);
+      }
+    )
+    .subscribe();
 
-    return { close: () => clearInterval(intervalId) };
-  }
-
-  // Real WebSocket connection
-  const wsUrl = BASE_URL.replace('http', 'ws').replace('/api', '/ws/vitals');
-  const ws = new WebSocket(wsUrl);
-  ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    onMessage(data);
+  return {
+    close: () => supabase.removeChannel(channel),
   };
-  return ws;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -132,8 +143,18 @@ export function connectVitalsStream(onMessage) {
 // ══════════════════════════════════════════════════════════════
 
 export async function getNurses() {
-  if (USE_MOCK) return mockDelay([...mockNurses]);
-  return apiFetch('/nurses');
+  const { data, error } = await supabase
+    .from('nurses')
+    .select('*, patients(count)')
+    .order('name');
+
+  if (error) handleError(error, 'getNurses');
+  return (data || []).map((n) => ({
+    ...n,
+    patientCount: n.patients?.[0]?.count ?? 0,
+    maxCapacity: n.max_capacity,
+    shift: n.shift_type,
+  }));
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -141,24 +162,55 @@ export async function getNurses() {
 // ══════════════════════════════════════════════════════════════
 
 export async function getTasks() {
-  if (USE_MOCK) return mockDelay([...mockTasks]);
-  return apiFetch('/tasks');
+  const { data, error } = await supabase
+    .from('tasks')
+    .select(`
+      *,
+      patient:patients!patient_id (id, name),
+      creator:nurses!created_by (id, name)
+    `)
+    .order('created_at', { ascending: false });
+
+  if (error) handleError(error, 'getTasks');
+
+  return (data || []).map((t) => ({
+    ...t,
+    patientName: t.patient?.name || '',
+    createdBy: t.creator?.name || '',
+  }));
 }
 
 export async function updateTaskStatus(taskId, status) {
-  if (USE_MOCK) return mockDelay({ success: true });
-  return apiFetch(`/tasks/${taskId}/status`, {
-    method: 'PUT',
-    body: JSON.stringify({ status }),
-  });
+  const { data, error } = await supabase
+    .from('tasks')
+    .update({ status })
+    .eq('id', taskId);
+
+  if (error) handleError(error, 'updateTaskStatus');
+  return data;
 }
 
 export async function createTask(task) {
-  if (USE_MOCK) return mockDelay({ success: true, id: `T${Date.now()}` });
-  return apiFetch('/tasks', {
-    method: 'POST',
-    body: JSON.stringify(task),
-  });
+  const { data, error } = await supabase
+    .from('tasks')
+    .insert([task])
+    .select()
+    .single();
+
+  if (error) handleError(error, 'createTask');
+  return data;
+}
+
+// Real-time tasks subscription
+export function subscribeToTasks(onUpdate) {
+  const channel = supabase
+    .channel('tasks-realtime')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, (payload) => {
+      onUpdate(payload);
+    })
+    .subscribe();
+
+  return { close: () => supabase.removeChannel(channel) };
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -166,44 +218,47 @@ export async function createTask(task) {
 // ══════════════════════════════════════════════════════════════
 
 export async function getSoapNotes() {
-  if (USE_MOCK) return mockDelay([...mockSoapNotes]);
-  return apiFetch('/soap-notes');
+  const { data, error } = await supabase
+    .from('soap_notes')
+    .select('*, patient:patients!patient_id(id, name)')
+    .order('recorded_at', { ascending: false });
+
+  if (error) handleError(error, 'getSoapNotes');
+  return (data || []).map((n) => ({ ...n, patientName: n.patient?.name || '' }));
 }
 
 export async function getSoapNotesByPatient(patientId) {
-  if (USE_MOCK) {
-    const notes = mockSoapNotes.filter((n) => n.patientId === patientId);
-    return mockDelay(notes);
-  }
-  return apiFetch(`/soap-notes?patientId=${patientId}`);
+  const { data, error } = await supabase
+    .from('soap_notes')
+    .select('*')
+    .eq('patient_id', patientId)
+    .order('recorded_at', { ascending: false });
+
+  if (error) handleError(error, 'getSoapNotesByPatient');
+  return data || [];
 }
 
 export async function createSoapNote(note) {
-  if (USE_MOCK) return mockDelay({ success: true, id: `SN${Date.now()}` });
-  return apiFetch('/soap-notes', {
-    method: 'POST',
-    body: JSON.stringify(note),
-  });
+  const { data, error } = await supabase
+    .from('soap_notes')
+    .insert([note])
+    .select()
+    .single();
+
+  if (error) handleError(error, 'createSoapNote');
+  return data;
 }
 
 export async function transcribeAudio(audioBlob) {
-  if (USE_MOCK) {
-    return mockDelay({
-      text: 'Patient reports persistent chest pain rated 6 out of 10. Blood pressure is 145 over 92. Heart rate is 98 beats per minute. Started on Metoprolol 25mg twice daily.',
-      entities: {
-        vitals: ['BP 145/92', 'HR 98 bpm'],
-        medications: ['Metoprolol 25mg'],
-        conditions: ['persistent chest pain'],
-      },
-    });
-  }
+  // Still uses a backend endpoint — AI team will implement this
   const formData = new FormData();
   formData.append('audio', audioBlob);
-  return apiFetch('/soap-notes/transcribe', {
+  const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/soap-notes/transcribe`, {
     method: 'POST',
-    headers: {}, // Let browser set multipart headers
     body: formData,
   });
+  if (!res.ok) throw new Error('Transcription failed');
+  return res.json();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -211,31 +266,42 @@ export async function transcribeAudio(audioBlob) {
 // ══════════════════════════════════════════════════════════════
 
 export async function getChatHistory() {
-  if (USE_MOCK) return mockDelay([...mockChatMessages]);
-  return apiFetch('/chat/history');
+  const { data, error } = await supabase
+    .from('chat_messages')
+    .select('*')
+    .order('created_at', { ascending: true })
+    .limit(50);
+
+  if (error) handleError(error, 'getChatHistory');
+  return (data || []).map((m) => ({
+    ...m,
+    timestamp: new Date(m.created_at).toLocaleTimeString('en-IN', { hour12: false }),
+  }));
 }
 
 export async function sendChatMessage(message) {
-  if (USE_MOCK) {
-    // Simulate AI response
-    const responses = [
-      { text: 'Based on the current ward data, all P1 patients have been assessed within the last 30 minutes. No new critical alerts pending.', source: 'Ward data at ' + new Date().toLocaleTimeString() },
-      { text: 'There are 3 STAT medications pending administration. Mr. Raj Sharma (Bed 7) has Metoprolol overdue by 4 hours. Please verify.', source: 'Medication records, last sync 5 min ago' },
-      { text: 'Mr. Suresh Kumar (Bed 12) shows SpO2 trending down from 93% to 89% over the past 2 hours. Recommend increasing O2 delivery and ordering ABG.', source: 'Vitals trend analysis' },
-    ];
-    const response = responses[Math.floor(Math.random() * responses.length)];
-    return mockDelay({
-      id: `C${Date.now()}`,
-      role: 'assistant',
-      text: response.text,
-      source: response.source,
-      timestamp: new Date().toLocaleTimeString(),
-    }, 1500);
-  }
-  return apiFetch('/chat/send', {
+  // Save user message first
+  await supabase.from('chat_messages').insert([{ role: 'user', text: message }]);
+
+  // Call the AI backend (ML team endpoint)
+  const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/chat/send`, {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message }),
   });
+
+  if (!res.ok) throw new Error('Chat request failed');
+  const reply = await res.json();
+
+  // Save AI response to DB
+  const { data, error } = await supabase
+    .from('chat_messages')
+    .insert([{ role: 'assistant', text: reply.text, source: reply.source }])
+    .select()
+    .single();
+
+  if (error) handleError(error, 'sendChatMessage');
+  return { ...data, timestamp: new Date(data.created_at).toLocaleTimeString('en-IN', { hour12: false }) };
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -243,45 +309,114 @@ export async function sendChatMessage(message) {
 // ══════════════════════════════════════════════════════════════
 
 export async function getShiftSwapRequests() {
-  if (USE_MOCK) return mockDelay([...mockShiftSwaps]);
-  return apiFetch('/shift-swap');
+  const { data, error } = await supabase
+    .from('shift_swap_requests')
+    .select('*, requestor:nurses!requestor_id(id, name, initials, role)')
+    .order('created_at', { ascending: false });
+
+  if (error) handleError(error, 'getShiftSwapRequests');
+
+  return (data || []).map((r) => ({
+    ...r,
+    requestor: r.requestor,
+    currentShift: {
+      type: r.target_shift_type,
+      date: r.target_shift_date,
+    },
+    reason: r.reason,
+    status: r.status,
+  }));
 }
 
 export async function respondToShiftSwap(requestId, action) {
-  if (USE_MOCK) return mockDelay({ success: true, action });
-  return apiFetch(`/shift-swap/${requestId}/${action}`, {
-    method: 'POST',
-  });
+  const { data, error } = await supabase
+    .from('shift_swap_requests')
+    .update({ status: action }) // action = 'accepted' | 'rejected'
+    .eq('id', requestId);
+
+  if (error) handleError(error, 'respondToShiftSwap');
+  return data;
+}
+
+// Real-time shift swap subscription
+export function subscribeToShiftSwaps(onUpdate) {
+  const channel = supabase
+    .channel('shift-swap-realtime')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'shift_swap_requests' }, (payload) => {
+      onUpdate(payload);
+    })
+    .subscribe();
+
+  return { close: () => supabase.removeChannel(channel) };
 }
 
 // ══════════════════════════════════════════════════════════════
-// ANALYTICS / CHARTS
+// ANALYTICS
 // ══════════════════════════════════════════════════════════════
 
 export async function getTriageScoreHistory() {
-  if (USE_MOCK) return mockDelay([...mockTriageScores]);
-  return apiFetch('/analytics/triage-scores');
+  // This will come from your AI/ML team writing to a `triage_scores` table.
+  // Placeholder until backend provides it:
+  return [];
 }
 
 export async function getScheduleData() {
-  if (USE_MOCK) return mockDelay({ ...mockSchedule });
-  return apiFetch('/schedule');
+  return {};
 }
 
 // ══════════════════════════════════════════════════════════════
-// DASHBOARD STATS
+// DASHBOARD STATS (computed from live DB)
 // ══════════════════════════════════════════════════════════════
 
 export async function getDashboardStats() {
-  if (USE_MOCK) {
-    const totalPatients = mockPatients.length;
-    const p1Count = mockPatients.filter((p) => p.risk === 'P1').length;
-    const statMeds = mockPatients.reduce(
-      (acc, p) => acc + p.medications.filter((m) => m.urgency === 'STAT').length,
-      0
-    );
-    const onShift = mockNurses.filter((n) => n.shift === 'Day').length;
-    return mockDelay({ totalPatients, p1Count, statMeds, onShift });
-  }
-  return apiFetch('/dashboard/stats');
+  const [{ count: totalPatients }, { count: p1Count }, { count: statMeds }, { count: onShift }] = await Promise.all([
+    supabase.from('patients').select('*', { count: 'exact', head: true }),
+    supabase.from('patients').select('*', { count: 'exact', head: true }).eq('risk', 'P1'),
+    supabase.from('medications').select('*', { count: 'exact', head: true }).eq('urgency', 'STAT').eq('status', 'pending'),
+    supabase.from('nurses').select('*', { count: 'exact', head: true }).eq('shift_type', 'Day'),
+  ]);
+
+  return { totalPatients, p1Count, statMeds, onShift };
+}
+
+// ══════════════════════════════════════════════════════════════
+// INTERNAL NORMALIZER
+// Maps snake_case DB columns → camelCase shape the UI expects
+// ══════════════════════════════════════════════════════════════
+
+function normalizePatient(p) {
+  if (!p) return null;
+  return {
+    id: p.id,
+    name: p.name,
+    age: p.age,
+    gender: p.gender,
+    bed: p.bed,
+    ward: p.ward,
+    risk: p.risk,
+    initials: p.initials,
+    diagnosis: p.diagnosis,
+    assignedNurse: p.assigned_nurse?.name || '',
+    admittedDate: p.admitted_date,
+    lastUpdated: p.updated_at
+      ? new Date(p.updated_at).toLocaleTimeString('en-IN', { hour12: false })
+      : '',
+    vitals: p.vitals
+      ? {
+          hr: p.vitals.hr,
+          spo2: p.vitals.spo2,
+          bpSys: p.vitals.bp_sys,
+          bpDia: p.vitals.bp_dia,
+          temp: p.vitals.temp,
+          rr: p.vitals.rr,
+        }
+      : { hr: 0, spo2: 0, bpSys: 0, bpDia: 0, temp: 0, rr: 0 },
+    medications: (p.medications || []).map((m) => ({
+      name: m.name,
+      schedule: m.schedule,
+      time: m.time,
+      urgency: m.urgency,
+      status: m.status,
+    })),
+  };
 }
