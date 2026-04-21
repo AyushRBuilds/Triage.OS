@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Mic, MicOff, Save, Trash2, Clock, ChevronDown, FileText, Plus, Edit3, X } from 'lucide-react';
-import { getSoapNotes, getPatients, transcribeAudio } from '../api/services';
+import { getSoapNotes, createSoapNote, getPatients, transcribeAudio } from '../api/services';
+import { supabase } from '../api/supabaseClient';
 import './SOAPNoteViewer.css';
 
 export default function SOAPNoteViewer() {
@@ -14,6 +15,7 @@ export default function SOAPNoteViewer() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     patientId: '',
     subjective: '',
@@ -31,7 +33,6 @@ export default function SOAPNoteViewer() {
     load();
   }, []);
 
-  // Auto-set patient in form when filtered
   useEffect(() => {
     if (selectedPatient !== 'all') {
       setFormData((prev) => ({ ...prev, patientId: selectedPatient }));
@@ -40,7 +41,7 @@ export default function SOAPNoteViewer() {
 
   const filteredNotes = selectedPatient === 'all'
     ? notes
-    : notes.filter((n) => n.patientId === selectedPatient);
+    : notes.filter((n) => n.patient_id === selectedPatient || n.patientId === selectedPatient);
 
   const selectedPatientData = patients.find((p) => p.id === selectedPatient);
 
@@ -55,58 +56,86 @@ export default function SOAPNoteViewer() {
     }
   };
 
-  const handleSave = () => {
-    if (transcript) {
-      const patient = patients.find((p) => p.id === (selectedPatient !== 'all' ? selectedPatient : 'P001'));
-      const newNote = {
-        id: `SN${Date.now()}`,
-        patientId: patient?.id || 'P001',
-        patientName: patient?.name || 'Unknown',
-        timestamp: new Date().toLocaleTimeString(),
-        date: new Date().toISOString().split('T')[0],
+  // Save voice-transcribed note to Supabase
+  const handleSave = async () => {
+    if (!transcript) return;
+    setSaving(true);
+    try {
+      const patientId = selectedPatient !== 'all' ? selectedPatient : patients[0]?.id;
+      const patient = patients.find((p) => p.id === patientId);
+      const saved = await createSoapNote({
+        patient_id: patientId,
         subjective: transcript.text,
         objective: '',
         assessment: '',
         plan: '',
-      };
-      setNotes((prev) => [newNote, ...prev]);
+        entities: transcript.entities || {},
+      });
+      setNotes((prev) => [{ ...saved, patientName: patient?.name || '' }, ...prev]);
       setTranscript(null);
       setIsRecording(false);
+    } catch (err) {
+      console.error('Failed to save note:', err);
+      alert('Could not save note.');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleAddNote = () => {
+  // Save / update manual SOAP note to Supabase
+  const handleAddNote = async () => {
     if (!formData.patientId || !formData.subjective.trim()) return;
-    const patient = patients.find((p) => p.id === formData.patientId);
-    const newNote = {
-      id: `SN${Date.now()}`,
-      patientId: formData.patientId,
-      patientName: patient?.name || 'Unknown',
-      timestamp: new Date().toLocaleTimeString(),
-      date: new Date().toISOString().split('T')[0],
-      subjective: formData.subjective,
-      objective: formData.objective,
-      assessment: formData.assessment,
-      plan: formData.plan,
-    };
-    if (editingNote) {
-      setNotes((prev) => prev.map((n) => n.id === editingNote ? { ...newNote, id: editingNote } : n));
-      setEditingNote(null);
-    } else {
-      setNotes((prev) => [newNote, ...prev]);
+    setSaving(true);
+    try {
+      const patient = patients.find((p) => p.id === formData.patientId);
+
+      if (editingNote) {
+        // UPDATE existing note
+        const { data, error } = await supabase
+          .from('soap_notes')
+          .update({
+            subjective: formData.subjective,
+            objective: formData.objective,
+            assessment: formData.assessment,
+            plan: formData.plan,
+          })
+          .eq('id', editingNote)
+          .select()
+          .single();
+        if (error) throw error;
+        setNotes((prev) => prev.map((n) => n.id === editingNote ? { ...data, patientName: patient?.name || n.patientName } : n));
+        setEditingNote(null);
+      } else {
+        // INSERT new note
+        const saved = await createSoapNote({
+          patient_id: formData.patientId,
+          subjective: formData.subjective,
+          objective: formData.objective,
+          assessment: formData.assessment,
+          plan: formData.plan,
+          entities: {},
+        });
+        setNotes((prev) => [{ ...saved, patientName: patient?.name || '' }, ...prev]);
+      }
+
+      setFormData({ patientId: selectedPatient !== 'all' ? selectedPatient : '', subjective: '', objective: '', assessment: '', plan: '' });
+      setShowAddForm(false);
+    } catch (err) {
+      console.error('Failed to save SOAP note:', err);
+      alert('Could not save note.');
+    } finally {
+      setSaving(false);
     }
-    setFormData({ patientId: selectedPatient !== 'all' ? selectedPatient : '', subjective: '', objective: '', assessment: '', plan: '' });
-    setShowAddForm(false);
   };
 
   const handleEditNote = (note) => {
     setEditingNote(note.id);
     setFormData({
-      patientId: note.patientId,
-      subjective: note.subjective,
-      objective: note.objective,
-      assessment: note.assessment,
-      plan: note.plan,
+      patientId: note.patient_id || note.patientId,
+      subjective: note.subjective || '',
+      objective: note.objective || '',
+      assessment: note.assessment || '',
+      plan: note.plan || '',
     });
     setShowAddForm(true);
   };
@@ -123,9 +152,7 @@ export default function SOAPNoteViewer() {
             </button>
             <div className="soap-dropdown-wrapper">
               <button className="soap-dropdown-btn" onClick={() => setShowDropdown(!showDropdown)}>
-                {selectedPatient === 'all'
-                  ? 'All Patients'
-                  : selectedPatientData?.name || 'Select'}
+                {selectedPatient === 'all' ? 'All Patients' : selectedPatientData?.name || 'Select'}
                 <ChevronDown size={14} />
               </button>
               {showDropdown && (
@@ -144,7 +171,6 @@ export default function SOAPNoteViewer() {
           </div>
         </div>
 
-        {/* Patient banner when filtered */}
         {selectedPatientData && (
           <div className="soap-patient-banner card">
             <div className="soap-pat-avatar" style={{ background: selectedPatientData.risk === 'P1' ? 'var(--risk-p1)' : 'var(--green-primary)' }}>
@@ -158,50 +184,30 @@ export default function SOAPNoteViewer() {
           </div>
         )}
 
-        {/* Notes count */}
         <div className="soap-notes-count">
           <span className="text-label">{filteredNotes.length} note{filteredNotes.length !== 1 ? 's' : ''} found</span>
         </div>
 
-        {/* Notes timeline */}
         <div className="soap-timeline">
           {filteredNotes.map((note, idx) => (
             <div key={note.id} className="soap-note-entry card animate-fade-in">
-              {/* Timeline connector */}
               {idx < filteredNotes.length - 1 && <div className="soap-timeline-line" />}
-
               <div className="soap-note-header">
-                <span className="badge badge-available"><FileText size={10} /> {note.patientName}</span>
+                <span className="badge badge-available"><FileText size={10} /> {note.patientName || 'Unknown'}</span>
                 <div className="soap-note-header-right">
-                  <span className="soap-note-time"><Clock size={10} /> {note.timestamp} · {note.date}</span>
+                  <span className="soap-note-time">
+                    <Clock size={10} /> {note.recorded_at ? new Date(note.recorded_at).toLocaleTimeString() : ''} · {note.recorded_at ? new Date(note.recorded_at).toLocaleDateString() : ''}
+                  </span>
                   <button className="soap-edit-btn" onClick={() => handleEditNote(note)} title="Edit note">
                     <Edit3 size={12} />
                   </button>
                 </div>
               </div>
               <div className="soap-sections">
-                <div className="soap-section">
-                  <span className="soap-section-label">S</span>
-                  <p>{note.subjective}</p>
-                </div>
-                {note.objective && (
-                  <div className="soap-section">
-                    <span className="soap-section-label">O</span>
-                    <p>{note.objective}</p>
-                  </div>
-                )}
-                {note.assessment && (
-                  <div className="soap-section">
-                    <span className="soap-section-label">A</span>
-                    <p>{note.assessment}</p>
-                  </div>
-                )}
-                {note.plan && (
-                  <div className="soap-section">
-                    <span className="soap-section-label">P</span>
-                    <p>{note.plan}</p>
-                  </div>
-                )}
+                <div className="soap-section"><span className="soap-section-label">S</span><p>{note.subjective}</p></div>
+                {note.objective && <div className="soap-section"><span className="soap-section-label">O</span><p>{note.objective}</p></div>}
+                {note.assessment && <div className="soap-section"><span className="soap-section-label">A</span><p>{note.assessment}</p></div>}
+                {note.plan && <div className="soap-section"><span className="soap-section-label">P</span><p>{note.plan}</p></div>}
               </div>
             </div>
           ))}
@@ -217,7 +223,7 @@ export default function SOAPNoteViewer() {
         </div>
       </div>
 
-      {/* Right panel — Add/Edit form or Recording */}
+      {/* Right panel */}
       <div className="soap-right">
         {showAddForm ? (
           <div className="soap-add-form animate-fade-in">
@@ -225,7 +231,6 @@ export default function SOAPNoteViewer() {
               <h3 className="text-section-title">{editingNote ? 'Edit SOAP Note' : 'New SOAP Note'}</h3>
               <button className="kanban-modal-close" onClick={() => { setShowAddForm(false); setEditingNote(null); }}><X size={18} /></button>
             </div>
-
             <div className="soap-form-fields">
               <div className="kanban-form-field">
                 <label className="text-label">Patient *</label>
@@ -236,14 +241,13 @@ export default function SOAPNoteViewer() {
                   ))}
                 </select>
               </div>
-
               <div className="soap-form-section">
                 <label className="soap-form-label"><span className="soap-section-label">S</span> Subjective *</label>
-                <textarea className="input soap-form-textarea" placeholder="Patient's reported symptoms, complaints..." value={formData.subjective} onChange={(e) => setFormData({ ...formData, subjective: e.target.value })} />
+                <textarea className="input soap-form-textarea" placeholder="Patient's reported symptoms..." value={formData.subjective} onChange={(e) => setFormData({ ...formData, subjective: e.target.value })} />
               </div>
               <div className="soap-form-section">
                 <label className="soap-form-label"><span className="soap-section-label">O</span> Objective</label>
-                <textarea className="input soap-form-textarea" placeholder="Measurable, observable data (vitals, exam findings)..." value={formData.objective} onChange={(e) => setFormData({ ...formData, objective: e.target.value })} />
+                <textarea className="input soap-form-textarea" placeholder="Measurable, observable data..." value={formData.objective} onChange={(e) => setFormData({ ...formData, objective: e.target.value })} />
               </div>
               <div className="soap-form-section">
                 <label className="soap-form-label"><span className="soap-section-label">A</span> Assessment</label>
@@ -251,13 +255,12 @@ export default function SOAPNoteViewer() {
               </div>
               <div className="soap-form-section">
                 <label className="soap-form-label"><span className="soap-section-label">P</span> Plan</label>
-                <textarea className="input soap-form-textarea" placeholder="Treatment plan, next steps, follow-ups..." value={formData.plan} onChange={(e) => setFormData({ ...formData, plan: e.target.value })} />
+                <textarea className="input soap-form-textarea" placeholder="Treatment plan, next steps..." value={formData.plan} onChange={(e) => setFormData({ ...formData, plan: e.target.value })} />
               </div>
-
               <div className="soap-form-actions">
                 <button className="btn btn-ghost" onClick={() => { setShowAddForm(false); setEditingNote(null); }}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleAddNote} disabled={!formData.patientId || !formData.subjective.trim()}>
-                  <Save size={14} /> {editingNote ? 'Update Note' : 'Save Note'}
+                <button className="btn btn-primary" onClick={handleAddNote} disabled={!formData.patientId || !formData.subjective.trim() || saving}>
+                  <Save size={14} /> {saving ? 'Saving...' : editingNote ? 'Update Note' : 'Save Note'}
                 </button>
               </div>
             </div>
@@ -268,7 +271,6 @@ export default function SOAPNoteViewer() {
             <p className="text-body" style={{ marginBottom: 32 }}>
               Tap the microphone to start recording. Your voice will be transcribed into structured SOAP notes.
             </p>
-
             <div className="soap-mic-area">
               <button className={`soap-mic-btn ${isRecording ? 'recording' : ''}`} onClick={handleMicClick} id="soap-mic-button">
                 {isRecording ? <MicOff size={32} /> : <Mic size={32} />}
@@ -277,7 +279,6 @@ export default function SOAPNoteViewer() {
                 {isRecording ? 'Recording... Tap to stop' : 'Tap to record'}
               </span>
             </div>
-
             {isRecording && (
               <div className="soap-waveform">
                 {Array.from({ length: 12 }).map((_, i) => (
@@ -285,7 +286,6 @@ export default function SOAPNoteViewer() {
                 ))}
               </div>
             )}
-
             {transcript && (
               <div className="soap-transcript card animate-slide-up">
                 <h4 className="text-card-title" style={{ marginBottom: 8 }}>Transcribed Text</h4>
@@ -296,7 +296,9 @@ export default function SOAPNoteViewer() {
                   <span className="entity-condition">Conditions</span>
                 </div>
                 <div className="soap-transcript-actions">
-                  <button className="btn btn-primary" onClick={handleSave}><Save size={14} /> Save SOAP Note</button>
+                  <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+                    <Save size={14} /> {saving ? 'Saving...' : 'Save SOAP Note'}
+                  </button>
                   <button className="btn btn-ghost" onClick={() => setTranscript(null)}><Trash2 size={14} /> Discard</button>
                 </div>
               </div>

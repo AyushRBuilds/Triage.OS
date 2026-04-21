@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeftRight, Users, Clock, Check, X, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { getShiftSwapRequests, respondToShiftSwap, getNurses } from '../api/services';
+import { supabase } from '../api/supabaseClient';
 import './ShiftSwapPanel.css';
 
 export default function ShiftSwapPanel() {
@@ -8,6 +9,7 @@ export default function ShiftSwapPanel() {
   const [nurses, setNurses] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     colleagueId: '',
     shiftType: 'Night',
@@ -26,33 +28,63 @@ export default function ShiftSwapPanel() {
   }, []);
 
   const handleRespond = async (requestId, action) => {
-    await respondToShiftSwap(requestId, action);
+    // action from UI is 'accept' | 'decline', DB expects 'accepted' | 'rejected'
+    const dbStatus = action === 'accept' ? 'accepted' : 'rejected';
+    await respondToShiftSwap(requestId, dbStatus);
     setRequests((prev) =>
-      prev.map((r) => (r.id === requestId ? { ...r, status: action === 'accept' ? 'accepted' : 'declined' } : r))
+      prev.map((r) => (r.id === requestId ? { ...r, status: dbStatus } : r))
     );
   };
 
-  const handleDelete = (requestId) => {
+  const handleDelete = async (requestId) => {
+    const { error } = await supabase
+      .from('shift_swap_requests')
+      .delete()
+      .eq('id', requestId);
+    if (error) {
+      console.error('Delete failed:', error.message);
+      alert('Could not delete request. Check Supabase RLS policies.');
+      return;
+    }
     setRequests((prev) => prev.filter((r) => r.id !== requestId));
     setDeleteConfirm(null);
   };
 
-  const handleSubmitRequest = () => {
+  const handleSubmitRequest = async () => {
     if (!formData.colleagueId || !formData.date || !formData.reason) return;
-    const colleague = nurses.find((n) => n.id === formData.colleagueId);
-    const newReq = {
-      id: `SS${Date.now()}`,
-      requestor: { name: 'You', initials: 'YO', role: 'Nurse' },
-      targetNurse: colleague?.name || 'Unknown',
-      currentShift: { type: formData.shiftType, time: formData.shiftTime, ward: 'ICU Ward 3', date: formData.date },
-      patientsAssigned: 3,
-      reason: formData.reason,
-      status: 'pending',
-      outgoing: true,
-    };
-    setRequests((prev) => [newReq, ...prev]);
-    setFormData({ colleagueId: '', shiftType: 'Night', shiftTime: '8PM – 8AM', date: '', reason: '' });
-    setShowForm(false);
+    setSaving(true);
+    try {
+      const { data, error } = await supabase
+        .from('shift_swap_requests')
+        .insert([{
+          requestor_id: formData.colleagueId,
+          target_shift_date: formData.date,
+          target_shift_type: formData.shiftType,
+          reason: formData.reason,
+          status: 'pending',
+        }])
+        .select('*, requestor:nurses!requestor_id(id, name, initials, role)')
+        .single();
+
+      if (error) throw error;
+
+      const newReq = {
+        ...data,
+        requestor: data.requestor,
+        currentShift: { type: data.target_shift_type, date: data.target_shift_date },
+        reason: data.reason,
+        status: data.status,
+        outgoing: true,
+      };
+      setRequests((prev) => [newReq, ...prev]);
+      setFormData({ colleagueId: '', shiftType: 'Night', shiftTime: '8PM – 8AM', date: '', reason: '' });
+      setShowForm(false);
+    } catch (err) {
+      console.error('Failed to submit request:', err.message);
+      alert('Could not submit request.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const pendingRequests = requests.filter((r) => r.status === 'pending');
@@ -85,7 +117,7 @@ export default function ShiftSwapPanel() {
             </div>
             <h4 className="text-card-title" style={{ textAlign: 'center' }}>Delete Request?</h4>
             <p className="text-body" style={{ textAlign: 'center', marginBottom: 20 }}>
-              This will permanently remove this shift swap request. This action cannot be undone.
+              This will permanently remove this shift swap request from the database.
             </p>
             <div className="kanban-form-actions" style={{ justifyContent: 'center' }}>
               <button className="btn btn-ghost" onClick={() => setDeleteConfirm(null)}>Cancel</button>
@@ -121,7 +153,6 @@ export default function ShiftSwapPanel() {
                   <select className="input" value={formData.shiftType} onChange={(e) => setFormData({ ...formData, shiftType: e.target.value })}>
                     <option value="Day">Day</option>
                     <option value="Night">Night</option>
-                    <option value="Morning">Morning</option>
                   </select>
                 </div>
                 <div className="kanban-form-field">
@@ -135,8 +166,8 @@ export default function ShiftSwapPanel() {
               </div>
               <div className="kanban-form-actions">
                 <button className="btn btn-ghost" onClick={() => setShowForm(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleSubmitRequest} disabled={!formData.colleagueId || !formData.date || !formData.reason}>
-                  <ArrowLeftRight size={14} /> Send Request
+                <button className="btn btn-primary" onClick={handleSubmitRequest} disabled={!formData.colleagueId || !formData.date || !formData.reason || saving}>
+                  <ArrowLeftRight size={14} /> {saving ? 'Sending...' : 'Send Request'}
                 </button>
               </div>
             </div>
@@ -152,10 +183,10 @@ export default function ShiftSwapPanel() {
             {pendingRequests.map((req) => (
               <div key={req.id} className="shift-card card animate-fade-in">
                 <div className="shift-card-top">
-                  <div className="shift-card-avatar">{req.requestor.initials}</div>
+                  <div className="shift-card-avatar">{req.requestor?.initials || '?'}</div>
                   <div className="shift-card-info">
-                    <span className="shift-card-name">{req.requestor.name}</span>
-                    <span className="shift-card-role text-body">{req.requestor.role}</span>
+                    <span className="shift-card-name">{req.requestor?.name || 'Unknown'}</span>
+                    <span className="shift-card-role text-body">{req.requestor?.role || ''}</span>
                   </div>
                   {req.outgoing && <span className="badge badge-p4">Outgoing</span>}
                   <button className="shift-delete-btn" onClick={() => setDeleteConfirm(req.id)} title="Delete request">
@@ -163,9 +194,7 @@ export default function ShiftSwapPanel() {
                   </button>
                 </div>
                 <div className="shift-card-details">
-                  <div className="shift-detail"><Clock size={12} /><span>Shift: {req.currentShift.type} · {req.currentShift.time}</span></div>
-                  <div className="shift-detail"><ArrowLeftRight size={12} /><span>Ward: {req.currentShift.ward} · {req.currentShift.date}</span></div>
-                  <div className="shift-detail"><Users size={12} /><span>Patients assigned: {req.patientsAssigned}</span></div>
+                  <div className="shift-detail"><Clock size={12} /><span>Shift: {req.currentShift?.type} · {req.currentShift?.date}</span></div>
                 </div>
                 <div className="shift-card-reason">
                   <span className="text-label">Reason</span>
@@ -195,13 +224,13 @@ export default function ShiftSwapPanel() {
             {resolvedRequests.map((req) => (
               <div key={req.id} className="shift-card card shift-card-resolved">
                 <div className="shift-card-top">
-                  <div className="shift-card-avatar" style={{ opacity: 0.5 }}>{req.requestor.initials}</div>
+                  <div className="shift-card-avatar" style={{ opacity: 0.5 }}>{req.requestor?.initials || '?'}</div>
                   <div className="shift-card-info">
-                    <span className="shift-card-name">{req.requestor.name}</span>
-                    <span className="shift-card-role text-body">{req.requestor.role}</span>
+                    <span className="shift-card-name">{req.requestor?.name || 'Unknown'}</span>
+                    <span className="shift-card-role text-body">{req.requestor?.role || ''}</span>
                   </div>
                   <span className={`badge ${req.status === 'accepted' ? 'badge-available' : 'badge-p1'}`}>
-                    {req.status === 'accepted' ? 'Approved' : req.status === 'declined' ? 'Rejected' : req.status}
+                    {req.status === 'accepted' ? 'Approved' : 'Rejected'}
                   </span>
                   <button className="shift-delete-btn" onClick={() => setDeleteConfirm(req.id)} title="Delete request">
                     <Trash2 size={14} />
@@ -209,7 +238,7 @@ export default function ShiftSwapPanel() {
                 </div>
                 <div className="shift-detail" style={{ marginTop: 8 }}>
                   <Clock size={12} />
-                  <span>{req.currentShift.type} · {req.currentShift.time} · {req.currentShift.date}</span>
+                  <span>{req.currentShift?.type} · {req.currentShift?.date}</span>
                 </div>
               </div>
             ))}
