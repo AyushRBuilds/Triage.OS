@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Heart, Wind, Thermometer, Activity, Plus, Save, ChevronDown } from 'lucide-react';
-import { getPatients } from '../api/services';
+import { getPatients, updatePatientVitals } from '../api/services';
 import { useSimulatedVitals } from '../hooks/useSimulatedVitals';
 import VitalMiniCard from './ui/VitalMiniCard';
 import './VitalsPage.css';
@@ -13,6 +13,7 @@ export default function VitalsPage() {
   const [showForm, setShowForm] = useState(false);
   const [vitalForm, setVitalForm] = useState({ hr: '', spo2: '', bpSys: '', bpDia: '', temp: '', rr: '' });
   const [saveMsg, setSaveMsg] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const { patients, isConnected } = useSimulatedVitals(rawPatients);
 
@@ -32,11 +33,32 @@ export default function VitalsPage() {
   const generateSparkline = (base, variance, count = 12) =>
     Array.from({ length: count }, () => base + Math.round((Math.random() - 0.5) * variance * 2));
 
-  const handleSave = () => {
-    setSaveMsg('Vitals saved successfully!');
-    setShowForm(false);
-    setVitalForm({ hr: '', spo2: '', bpSys: '', bpDia: '', temp: '', rr: '' });
-    setTimeout(() => setSaveMsg(''), 3000);
+  const handleSave = async () => {
+    if (!selectedPatientId) return;
+    setSaving(true);
+    try {
+      // Only send fields that were actually filled in
+      const updates = {};
+      if (vitalForm.hr)     updates.hr     = parseInt(vitalForm.hr);
+      if (vitalForm.spo2)   updates.spo2   = parseInt(vitalForm.spo2);
+      if (vitalForm.bpSys)  updates.bp_sys = parseInt(vitalForm.bpSys);
+      if (vitalForm.bpDia)  updates.bp_dia = parseInt(vitalForm.bpDia);
+      if (vitalForm.temp)   updates.temp   = parseFloat(vitalForm.temp);
+      if (vitalForm.rr)     updates.rr     = parseInt(vitalForm.rr);
+
+      if (Object.keys(updates).length > 0) {
+        await updatePatientVitals(selectedPatientId, updates);
+      }
+      setSaveMsg('Vitals saved successfully!');
+      setShowForm(false);
+      setVitalForm({ hr: '', spo2: '', bpSys: '', bpDia: '', temp: '', rr: '' });
+      setTimeout(() => setSaveMsg(''), 3000);
+    } catch (err) {
+      console.error('Failed to save vitals:', err);
+      alert('Could not save vitals. Check Supabase RLS policies.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -165,7 +187,7 @@ export default function VitalsPage() {
               </div>
               <div className="vitals-form-actions">
                 <button className="btn btn-ghost" onClick={() => setShowForm(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleSave}><Save size={14} /> Save Vitals</button>
+                <button className="btn btn-primary" onClick={handleSave} disabled={saving}><Save size={14} /> {saving ? 'Saving...' : 'Save Vitals'}</button>
               </div>
             </div>
           )}

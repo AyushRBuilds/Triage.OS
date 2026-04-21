@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { GripVertical, Stethoscope, Clock, Plus, X, Calendar } from 'lucide-react';
-import { getTasks, updateTaskStatus, getPatients } from '../api/services';
+import { getTasks, updateTaskStatus, createTask, getPatients } from '../api/services';
 import './KanbanBoard.css';
 
 const columns = [
@@ -15,6 +15,7 @@ export default function KanbanBoard() {
   const [patients, setPatients] = useState([]);
   const [patientFilter, setPatientFilter] = useState('all');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -49,25 +50,37 @@ export default function KanbanBoard() {
     await updateTaskStatus(taskId, newStatus);
   };
 
-  const handleAddTask = () => {
+  const handleAddTask = async () => {
     if (!newTask.title.trim()) return;
-    const patient = patients.find((p) => p.id === newTask.patientId);
-    const task = {
-      id: `T${Date.now()}`,
-      title: newTask.title,
-      description: newTask.description,
-      patientId: newTask.patientId,
-      patientName: patient?.name || 'Unassigned',
-      priority: newTask.priority,
-      status: 'todo',
-      createdBy: 'Current User',
-      createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      deadline: newTask.deadline,
-      assignedTo: newTask.assignedTo,
-    };
-    setTasks((prev) => [task, ...prev]);
-    setNewTask({ title: '', description: '', patientId: '', priority: 'Routine', deadline: '', assignedTo: '' });
-    setShowAddForm(false);
+    setSaving(true);
+    try {
+      const patient = patients.find((p) => p.id === newTask.patientId);
+      const payload = {
+        title: newTask.title,
+        description: newTask.description || null,
+        patient_id: newTask.patientId || null,
+        priority: newTask.priority,
+        status: 'todo',
+        type: 'nursing',
+      };
+      const saved = await createTask(payload);
+      const taskForUI = {
+        ...saved,
+        patientName: patient?.name || 'Unassigned',
+        createdBy: 'Current User',
+        createdAt: new Date(saved.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        deadline: newTask.deadline,
+        assignedTo: newTask.assignedTo,
+      };
+      setTasks((prev) => [taskForUI, ...prev]);
+      setNewTask({ title: '', description: '', patientId: '', priority: 'Routine', deadline: '', assignedTo: '' });
+      setShowAddForm(false);
+    } catch (err) {
+      console.error('Failed to save task:', err);
+      alert('Could not save task. Check Supabase RLS policies.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const getPriorityBadge = (priority) => {
@@ -147,8 +160,8 @@ export default function KanbanBoard() {
               </div>
               <div className="kanban-form-actions">
                 <button className="btn btn-ghost" onClick={() => setShowAddForm(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleAddTask} disabled={!newTask.title.trim()}>
-                  <Plus size={14} /> Create Task
+                <button className="btn btn-primary" onClick={handleAddTask} disabled={!newTask.title.trim() || saving}>
+                  <Plus size={14} /> {saving ? 'Saving...' : 'Create Task'}
                 </button>
               </div>
             </div>
