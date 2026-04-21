@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, ChevronDown, RefreshCw } from 'lucide-react';
-import { getPatients, getNurses } from '../api/services';
+import { Plus, Search, ChevronDown, RefreshCw, Trash2 } from 'lucide-react';
+import { getPatients, getNurses, deletePatient } from '../api/services';
 import { getRiskBadgeClass } from '../data/mockData';
 import './AdminDashboard.css';
 
@@ -29,6 +29,17 @@ export default function AdminDashboard() {
   });
 
   const getNurseByName = (name) => nurses.find((n) => n.name === name);
+
+  const handleDeletePatient = async (patientId) => {
+    if (!window.confirm('Are you sure you want to delete this patient? This action cannot be undone.')) return;
+    try {
+      await deletePatient(patientId);
+      setPatients((prev) => prev.filter((p) => p.id !== patientId));
+    } catch (err) {
+      console.error('Failed to delete patient:', err);
+      alert('Could not delete patient. Check Supabase RLS policies.');
+    }
+  };
 
   return (
     <div className="admin-page" id="admin-dashboard-page">
@@ -141,9 +152,14 @@ export default function AdminDashboard() {
                     </div>
                   </td>
                   <td>
-                    <button className="admin-reassign-btn">
-                      <RefreshCw size={12} /> Reassign
-                    </button>
+                    <div className="admin-action-group">
+                      <button className="admin-reassign-btn">
+                        <RefreshCw size={12} /> Reassign
+                      </button>
+                      <button className="admin-delete-btn" onClick={() => handleDeletePatient(patient.id)}>
+                        <Trash2 size={12} /> Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );

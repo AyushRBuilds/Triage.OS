@@ -1,0 +1,418 @@
+.ward-overview-container {
+  padding: 24px;
+  background-color: var(--black-bg);
+  min-height: 100vh;
+  color: var(--white-text);
+  font-family: 'Inter', sans-serif;
+  overflow-y: auto;
+}
+
+.ward-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.ward-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+
+.ward-breadcrumbs {
+  font-size: 13px;
+  color: #8b949e;
+}
+
+.ward-breadcrumbs .separator {
+  margin: 0 6px;
+}
+
+.ward-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.notification-icon {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  background-color: var(--card-bg);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8b949e;
+  cursor: pointer;
+}
+
+.notification-icon .badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background-color: var(--sick-red);
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background-color: var(--card-bg);
+  border-radius: 20px;
+  padding: 8px 16px;
+  border: 1px solid var(--border-color);
+  width: 280px;
+}
+
+.search-box input {
+  background: transparent;
+  border: none;
+  color: var(--white-text);
+  font-size: 14px;
+  flex: 1;
+  outline: none;
+}
+
+.search-box svg {
+  color: #8b949e;
+}
+
+.ward-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.metric-card {
+  background-color: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid var(--border-color);
+}
+
+.metric-icon-bg {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.metric-icon-bg.bg-blue { background-color: rgba(65, 137, 230, 0.15); color: #4189e6; }
+.metric-icon-bg.bg-green { background-color: rgba(143, 209, 79, 0.15); color: var(--health-green); }
+.metric-icon-bg.bg-yellow { background-color: rgba(255, 193, 7, 0.15); color: var(--amber-alert); }
+.metric-icon-bg.bg-red { background-color: rgba(255, 87, 87, 0.15); color: var(--sick-red); }
+
+.metric-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-label {
+  font-size: 13px;
+  color: #8b949e;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.metric-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--white-text);
+}
+
+.ward-main-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+}
+
+.ward-map-section {
+  background-color: var(--card-bg);
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid var(--border-color);
+}
+
+.ward-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.ward-section-header h2 {
+  font-size: 18px;
+  margin: 0;
+  font-weight: 600;
+}
+
+.ward-legend {
+  display: flex;
+  gap: 16px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #8b949e;
+}
+
+.legend-item .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.legend-item .dot.available { background-color: var(--health-green); }
+.legend-item .dot.occupied { background-color: var(--amber-alert); }
+.legend-item .dot.critical { background-color: var(--sick-red); }
+.legend-item .dot.maintenance { background-color: #6e7681; }
+
+.rooms-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.room-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.room-title {
+  font-size: 15px;
+  margin: 0;
+  font-weight: 600;
+  color: var(--white-text);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+}
+
+.beds-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.bed-card {
+  padding: 16px;
+  border-radius: 8px;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  border-left: 4px solid transparent;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.bed-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.status-available {
+  background-color: rgba(143, 209, 79, 0.1);
+  border-color: var(--health-green);
+}
+.status-available .bed-id { color: var(--health-green); }
+.status-available .bed-text { color: #8b949e; }
+
+.status-occupied {
+  background-color: rgba(255, 193, 7, 0.1);
+  border-color: var(--amber-alert);
+}
+.status-occupied .bed-id { color: var(--amber-alert); }
+
+.status-critical {
+  background-color: rgba(255, 87, 87, 0.1);
+  border-color: var(--sick-red);
+}
+.status-critical .bed-id { color: var(--sick-red); }
+
+.status-maintenance {
+  background-color: rgba(110, 118, 129, 0.1);
+  border-color: #6e7681;
+}
+.status-maintenance .bed-id { color: #6e7681; }
+.status-maintenance .bed-text { color: #8b949e; }
+
+.bed-id {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.bed-patient {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--white-text);
+  margin-bottom: 4px;
+}
+
+.bed-priority {
+  font-size: 12px;
+  color: #8b949e;
+}
+
+.bed-text {
+  font-size: 13px;
+  margin-top: auto;
+}
+
+.ward-sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.ward-details-card, .recent-admissions-card {
+  background-color: var(--card-bg);
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid var(--border-color);
+}
+
+.ward-details-card h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.details-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.details-list li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.details-list li span {
+  color: #8b949e;
+}
+
+.details-list li strong {
+  font-weight: 500;
+  color: var(--white-text);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.card-header h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.view-all-btn {
+  background: none;
+  border: none;
+  color: #4189e6;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+}
+
+.view-all-btn:hover {
+  text-decoration: underline;
+}
+
+.admissions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admission-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admission-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #2d333b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8b949e;
+}
+
+.admission-info {
+  flex: 1;
+}
+
+.adm-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--white-text);
+  margin-bottom: 2px;
+}
+
+.adm-bed {
+  font-size: 12px;
+  color: #8b949e;
+}
+
+.admission-status {
+  text-align: right;
+}
+
+.adm-priority {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--white-text);
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.priority-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.adm-time {
+  font-size: 11px;
+  color: #8b949e;
+}

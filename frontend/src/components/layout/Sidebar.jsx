@@ -12,6 +12,7 @@ import {
   Users,
   ClipboardList,
   BarChart3,
+  Map,
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -19,6 +20,7 @@ const roleNavItems = {
   nurse: [
     { to: '/nurse/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/patients', icon: Users, label: 'Patients' },
+    { to: '/ward-overview', icon: Map, label: 'Ward Overview' },
     { to: '/vitals', icon: Activity, label: 'Vitals' },
     { to: '/soap-notes', icon: Mic, label: 'SOAP Notes' },
     { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
@@ -27,6 +29,7 @@ const roleNavItems = {
   doctor: [
     { to: '/doctor/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/patients', icon: Users, label: 'Patients' },
+    { to: '/ward-overview', icon: Map, label: 'Ward Overview' },
     { to: '/vitals', icon: Activity, label: 'Vitals' },
     { to: '/soap-notes', icon: Mic, label: 'SOAP Notes' },
     { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
@@ -35,6 +38,7 @@ const roleNavItems = {
   admin: [
     { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/patients', icon: Users, label: 'Patients' },
+    { to: '/ward-overview', icon: Map, label: 'Ward Overview' },
     { to: '/admin/staff', icon: ClipboardList, label: 'Staff' },
     { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
     { to: '/admin/reports', icon: BarChart3, label: 'Reports' },
@@ -53,11 +57,6 @@ export default function Sidebar() {
         <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
           <path d="M16 6v20M6 16h20" stroke="#8FD14F" strokeWidth="3.5" strokeLinecap="round" />
         </svg>
-      </div>
-
-      {/* Role badge */}
-      <div className="sidebar-role-badge">
-        {role.charAt(0).toUpperCase()}
       </div>
 
       {/* Main Nav */}

@@ -16,6 +16,7 @@ import AdminDashboard from './components/AdminDashboard';
 import SettingsPage from './components/SettingsPage';
 import NurseChat from './components/NurseChat';
 import PatientDashboard from './components/PatientDashboard';
+import WardOverview from './components/WardOverview';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth();
@@ -71,6 +72,7 @@ export default function App() {
           <Route path="/shift-swap" element={<ShiftSwapPanel />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/patient-dashboard" element={<PatientDashboard />} />
+          <Route path="/ward-overview" element={<WardOverview />} />
 
           {/* Admin specific */}
           <Route path="/admin/patients" element={<AdminDashboard />} />
