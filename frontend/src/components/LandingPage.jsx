@@ -41,9 +41,7 @@ export default function LandingPage() {
         </ul>
         <div className="lp-nav-actions">
           <button className="lp-btn-ghost">Log in</button>
-          <button className="lp-btn-lime" onClick={() => navigate('/dashboard')}>
-            Get Access <ArrowRight size={13} />
-          </button>
+
         </div>
       </nav>
 
@@ -136,10 +134,7 @@ export default function LandingPage() {
       <section className="lp-stats-band" id="workflow">
         <div className="lp-stats-left">
           <h2>Your Bridge to <span className="lp-underline">Smarter</span><br />Hospital Operations</h2>
-          <button className="lp-btn-dark lp-btn-lg" onClick={() => navigate('/dashboard')}>
-            Our workflow
-            <span className="lp-btn-dark-arrow"><ArrowRight size={12} /></span>
-          </button>
+
           <p className="lp-stats-sub">Medicine Meets Technology.<br />Your AI-Powered Clinical Hub.</p>
         </div>
 
@@ -152,9 +147,6 @@ export default function LandingPage() {
           </div>
           <div className="lp-stat-big lp-num-green-bright">3.2K+</div>
           <div className="lp-stat-sub-label">Patients processed daily</div>
-          <a href="#" className="lp-view-link">
-            View case studies <ChevronRight size={13} />
-          </a>
         </div>
 
         <div className="lp-stat-card lp-stat-card-center">
@@ -171,7 +163,7 @@ export default function LandingPage() {
           TECH STRIP (lime)
       ════════════════════════════════ */}
       <div className="lp-tech-strip">
-        <span><Mic size={15} /> Whisper ASR</span>
+        <span><Mic size={15} /> WebSpeech API</span>
         <span><Brain size={15} /> BioClinicalBERT</span>
         <span><Activity size={15} /> XGBoost Vitals</span>
         <span><MessageCircle size={15} /> FAISS + Ollama RAG</span>
@@ -198,12 +190,12 @@ export default function LandingPage() {
             </div>
             <div className="lp-step-num">Step 01</div>
             <div className="lp-step-title">Speak Your Notes</div>
-            <p className="lp-step-desc">Nurses dictate shift notes verbally. Whisper ASR transcribes speech locally — no cloud, no latency.</p>
-            <div className="lp-chips"><span>Whisper</span><span>spaCy</span><span>NER</span></div>
+            <p className="lp-step-desc">Nurses dictate shift notes verbally. WebSpeech API transcribes speech locally — no cloud, no latency.</p>
+            <div className="lp-chips"><span>WebSpeech API</span><span>spaCy</span><span>NER</span></div>
           </div>
           <div className="lp-step-card">
-            <div className="lp-step-icon-wrap lp-step-icon-white">
-              <Shield size={20} />
+            <div className="lp-step-icon-wrap" style={{ background: "rgba(249,115,22,0.12)" }}>
+              <Shield size={20} className="text-orange-500" />
             </div>
             <div className="lp-step-num">Step 02</div>
             <div className="lp-step-title">AI Classification</div>
@@ -247,7 +239,7 @@ export default function LandingPage() {
         </div>
         <div className="lp-modules-grid">
           {[
-            { icon: <Mic size={28} />, title: 'Voice Transcription', sub: 'Whisper ASR', color: 'var(--green-primary)', bg: 'rgba(143,209,79,0.12)' },
+            { icon: <Mic size={28} />, title: 'Voice Transcription', sub: 'WebSpeech API', color: 'var(--green-primary)', bg: 'rgba(143,209,79,0.12)' },
             { icon: <Shield size={28} />, title: 'Medication Urgency', sub: 'BioClinicalBERT', color: 'var(--risk-p2)', bg: 'rgba(249,115,22,0.12)' },
             { icon: <Activity size={28} />, title: 'Patient Risk Score', sub: 'XGBoost Model', color: 'var(--risk-p1)', bg: 'rgba(239,68,68,0.12)' },
             { icon: <MessageCircle size={28} />, title: 'NurseChat RAG', sub: 'FAISS + Ollama', color: 'var(--green-primary)', bg: 'rgba(143,209,79,0.12)' },
@@ -268,10 +260,7 @@ export default function LandingPage() {
           ))}
         </div>
         <div className="lp-modules-cta">
-          <button className="lp-btn-dark lp-btn-lg" onClick={() => navigate('/dashboard')}>
-            Explore all modules
-            <span className="lp-btn-dark-arrow"><ArrowRight size={12} /></span>
-          </button>
+
         </div>
       </section>
 
@@ -378,7 +367,7 @@ export default function LandingPage() {
             <Lock size={22} className="lp-bounty-icon" />
             <h3>EDGE BOUNTY</h3>
             <p>100% local inference — zero external API calls, runs entirely on-device.</p>
-            <p className="lp-bounty-stack">Whisper · FAISS · Ollama</p>
+            <p className="lp-bounty-stack">WebSpeech API</p>
             <span className="lp-bounty-badge">✓ Eligible</span>
           </div>
         </div>
