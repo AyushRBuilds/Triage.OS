@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Mic, MicOff, Save, Trash2, Clock, ChevronDown, FileText, Plus, Edit3, X } from 'lucide-react';
-import { getSoapNotes, createSoapNote, getPatients, transcribeAudio } from '../api/services';
+import { getSoapNotes, createSoapNote, deleteSoapNote, getPatients, transcribeAudio } from '../api/services';
 import { supabase } from '../api/supabaseClient';
 import './SOAPNoteViewer.css';
 
@@ -128,6 +128,17 @@ export default function SOAPNoteViewer() {
     }
   };
 
+  const handleDeleteNote = async (noteId) => {
+    if (!window.confirm('Delete this SOAP note? This cannot be undone.')) return;
+    try {
+      await deleteSoapNote(noteId);
+      setNotes((prev) => prev.filter((n) => n.id !== noteId));
+    } catch (err) {
+      console.error('Failed to delete note:', err);
+      alert('Could not delete note.');
+    }
+  };
+
   const handleEditNote = (note) => {
     setEditingNote(note.id);
     setFormData({
@@ -200,6 +211,9 @@ export default function SOAPNoteViewer() {
                   </span>
                   <button className="soap-edit-btn" onClick={() => handleEditNote(note)} title="Edit note">
                     <Edit3 size={12} />
+                  </button>
+                  <button className="soap-delete-btn" onClick={() => handleDeleteNote(note.id)} title="Delete note">
+                    <Trash2 size={12} />
                   </button>
                 </div>
               </div>

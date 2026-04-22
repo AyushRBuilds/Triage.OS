@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { GripVertical, Stethoscope, Clock, Plus, X, Calendar } from 'lucide-react';
-import { getTasks, updateTaskStatus, createTask, getPatients } from '../api/services';
+import { GripVertical, Stethoscope, Clock, Plus, X, Calendar, Trash2 } from 'lucide-react';
+import { getTasks, updateTaskStatus, createTask, deleteTask, getPatients } from '../api/services';
 import './KanbanBoard.css';
 
 const columns = [
@@ -48,6 +48,17 @@ export default function KanbanBoard() {
       prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
     );
     await updateTaskStatus(taskId, newStatus);
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    if (!window.confirm('Delete this task?')) return;
+    try {
+      await deleteTask(taskId);
+      setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    } catch (err) {
+      console.error('Failed to delete task:', err);
+      alert('Could not delete task.');
+    }
   };
 
   const handleAddTask = async () => {
@@ -194,11 +205,17 @@ export default function KanbanBoard() {
                               className={`kanban-card card ${snapshot.isDragging ? 'dragging' : ''}`}
                               ref={provided.innerRef}
                               {...provided.draggableProps}
+                              {...provided.dragHandleProps}
                             >
                               <div className="kanban-card-top">
                                 <span className={`badge ${getPriorityBadge(task.priority)}`}>{task.priority}</span>
-                                <div className="kanban-drag-handle" {...provided.dragHandleProps}>
-                                  <GripVertical size={14} />
+                                <div className="kanban-card-actions">
+                                  <button className="kanban-delete-btn" onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }} title="Delete task">
+                                    <Trash2 size={12} />
+                                  </button>
+                                  <div className="kanban-drag-handle">
+                                    <GripVertical size={14} />
+                                  </div>
                                 </div>
                               </div>
                               <span className="kanban-card-title">{task.title}</span>

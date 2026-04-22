@@ -1,211 +1,488 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Play, Mic, Shield, Brain, MessageCircle, Zap, Lock, Activity } from 'lucide-react';
+import {
+  ArrowRight, Play, Mic, Shield, Brain,
+  MessageCircle, Zap, Lock, Activity,
+  ChevronRight, ChevronLeft, Check,
+  Stethoscope, ClipboardList, Calendar, BarChart2,
+  Users
+} from 'lucide-react';
 import './LandingPage.css';
+
+/* ─── tiny helpers ─── */
+const PulseDot = () => <span className="lp-pulse-dot" />;
+
+const Avatar = ({ initials, color }) => (
+  <div className="lp-avatar" style={{ background: color }}>{initials}</div>
+);
 
 export default function LandingPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="landing" id="landing-page">
-      {/* Section 1 — Hero */}
-      <section className="landing-hero">
-        <div className="landing-hero-bg">
-          <div className="landing-dot-grid" />
-          <div className="landing-glow" />
+    <div className="lp" id="landing-page">
+
+      {/* ════════════════════════════════
+          NAV
+      ════════════════════════════════ */}
+      <nav className="lp-nav">
+        <a className="lp-logo" href="#">
+          <span className="lp-logo-icon">
+            <Activity size={16} strokeWidth={2.5} />
+          </span>
+          triage<span className="lp-logo-accent">.os</span>
+        </a>
+        <ul className="lp-nav-links">
+          <li><a href="#">About</a></li>
+          <li><a href="#">Modules</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+        <div className="lp-nav-actions">
+          <button className="lp-btn-ghost">Log in</button>
+          <button className="lp-btn-lime" onClick={() => navigate('/dashboard')}>
+            Get Access <ArrowRight size={13} />
+          </button>
         </div>
-        <div className="landing-hero-content">
-          <div className="landing-hero-left">
-            <span className="landing-overline badge badge-available">AI HOSPITAL WORKFLOW OS</span>
-            <h1 className="landing-h1">
-              triage<span className="landing-h1-accent">.os</span>
+      </nav>
+
+      {/* ════════════════════════════════
+          HERO
+      ════════════════════════════════ */}
+      <section className="lp-hero-section">
+        <div className="lp-hero-card">
+          {/* bg texture */}
+          <div className="lp-dot-grid" />
+          <div className="lp-hero-glow" />
+
+          <div className="lp-hero-text">
+            <span className="lp-badge">AI HOSPITAL WORKFLOW OS</span>
+            <h1 className="lp-h1">
+              triage<span className="lp-h1-accent">.os</span>
             </h1>
-            <p className="landing-tagline">The nervous system of the ward.</p>
-            <p className="landing-desc">
+            <p className="lp-tagline">The nervous system of the ward.</p>
+            <p className="lp-desc">
               AI that converts nurse voice to clinical notes, scores patient risk in real time,
               and answers any question from live ward data. 100% local.
             </p>
-            <div className="landing-ctas">
-              <button className="btn btn-primary btn-lg" onClick={() => navigate('/dashboard')}>
-                Enter Dashboard <ArrowRight size={16} />
+            <div className="lp-hero-ctas">
+              <button className="lp-btn-lime lp-btn-lg" onClick={() => navigate('/dashboard')}>
+                Enter Dashboard <ArrowRight size={15} />
               </button>
-              <button className="btn btn-secondary btn-lg">
-                <Play size={16} /> Watch Demo
+              <button className="lp-btn-outline lp-btn-lg">
+                <Play size={14} /> Watch Demo
               </button>
             </div>
           </div>
-          <div className="landing-hero-right">
-            {/* Mini dashboard mockup */}
-            <div className="landing-mockup card">
-              <div className="landing-mockup-header">
-                <span className="pulse-dot" />
-                <span className="text-label" style={{ color: 'var(--green-text)' }}>LIVE VITALS</span>
+
+          {/* Vitals mockup */}
+          <div className="lp-hero-mockup">
+            <div className="lp-mockup-inner">
+              <div className="lp-mockup-header">
+                <PulseDot />
+                <span className="lp-label-green">LIVE VITALS</span>
               </div>
-              <div className="landing-mockup-vitals">
-                <div className="landing-vital-mini">
-                  <span className="text-label">HR</span>
-                  <span className="landing-vital-num" style={{ color: 'var(--status-critical)' }}>112</span>
-                  <span className="text-unit">bpm</span>
+              <div className="lp-vitals-row">
+                <div className="lp-vital">
+                  <span className="lp-vital-label">HR</span>
+                  <span className="lp-vital-num lp-num-red">112</span>
+                  <span className="lp-vital-unit">bpm</span>
                 </div>
-                <div className="landing-vital-mini">
-                  <span className="text-label">SpO2</span>
-                  <span className="landing-vital-num" style={{ color: 'var(--status-warning)' }}>91</span>
-                  <span className="text-unit">%</span>
+                <div className="lp-vital">
+                  <span className="lp-vital-label">SpO2</span>
+                  <span className="lp-vital-num lp-num-orange">91</span>
+                  <span className="lp-vital-unit">%</span>
                 </div>
-                <div className="landing-vital-mini">
-                  <span className="text-label">BP</span>
-                  <span className="landing-vital-num" style={{ color: 'var(--status-normal)' }}>120/80</span>
-                  <span className="text-unit">mmHg</span>
-                </div>
-              </div>
-              <div className="landing-mockup-patient">
-                <div style={{ borderLeft: '3px solid var(--risk-p1)', paddingLeft: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--risk-p1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, fontWeight: 700 }}>RS</div>
-                  <div>
-                    <span style={{ fontSize: 13, fontWeight: 600 }}>Mr. Raj Sharma</span>
-                    <span className="text-timestamp" style={{ display: 'block' }}>Bed 7 · ICU Ward 3</span>
-                  </div>
-                  <span className="badge badge-p1" style={{ marginLeft: 'auto' }}>P1</span>
+                <div className="lp-vital">
+                  <span className="lp-vital-label">BP</span>
+                  <span className="lp-vital-num lp-num-green">120/80</span>
+                  <span className="lp-vital-unit">mmHg</span>
                 </div>
               </div>
+              <div className="lp-patient-row">
+                <div className="lp-patient-stripe" />
+                <Avatar initials="RS" color="var(--risk-p1)" />
+                <div className="lp-patient-info">
+                  <span className="lp-patient-name">Mr. Raj Sharma</span>
+                  <span className="lp-patient-loc">Bed 7 · ICU Ward 3</span>
+                </div>
+                <span className="lp-badge-p1">P1</span>
+              </div>
+              <div className="lp-ekg-line">
+                <svg viewBox="0 0 300 40" preserveAspectRatio="none">
+                  <polyline
+                    points="0,20 30,20 50,20 65,5 75,35 85,5 100,20 130,20 150,20 165,8 175,32 185,8 200,20 230,20 250,20 265,10 275,30 285,10 300,20"
+                    fill="none"
+                    stroke="var(--green-primary)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
             </div>
+          </div>
+
+          {/* corner deco */}
+          <span className="lp-cross lp-cross-1">+</span>
+          <span className="lp-cross lp-cross-2">✦</span>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════
+          STATS BAND
+      ════════════════════════════════ */}
+      <section className="lp-stats-band">
+        <div className="lp-stats-left">
+          <h2>Your Bridge to <span className="lp-underline">Smarter</span><br />Hospital Operations</h2>
+          <button className="lp-btn-dark lp-btn-lg" onClick={() => navigate('/dashboard')}>
+            Our workflow
+            <span className="lp-btn-dark-arrow"><ArrowRight size={12} /></span>
+          </button>
+          <p className="lp-stats-sub">Medicine Meets Technology.<br />Your AI-Powered Clinical Hub.</p>
+        </div>
+
+        <div className="lp-stat-card">
+          <div className="lp-stat-label">Active Deployments</div>
+          <div className="lp-avatars-row">
+            <Avatar initials="MH" color="#6366f1" />
+            <Avatar initials="RG" color="var(--green-primary)" />
+            <Avatar initials="AP" color="#0891b2" />
+          </div>
+          <div className="lp-stat-big lp-num-green-bright">3.2K+</div>
+          <div className="lp-stat-sub-label">Patients processed daily</div>
+          <a href="#" className="lp-view-link">
+            View case studies <ChevronRight size={13} />
+          </a>
+        </div>
+
+        <div className="lp-stat-card lp-stat-card-center">
+          <div className="lp-donut-wrap">
+            <div className="lp-donut">
+              <div className="lp-donut-inner">94%</div>
+            </div>
+            <div className="lp-donut-label">Triage Accuracy</div>
           </div>
         </div>
       </section>
 
-      {/* Section 2 — Problem Stats */}
-      <section className="landing-stats-section">
-        <div className="landing-stats-grid">
-          <div className="landing-stat animate-slide-up">
-            <span className="landing-stat-num">67%</span>
-            <span className="landing-stat-label">of nursing time is administrative</span>
+      {/* ════════════════════════════════
+          TECH STRIP (lime)
+      ════════════════════════════════ */}
+      <div className="lp-tech-strip">
+        <span><Mic size={15} /> Whisper ASR</span>
+        <span><Brain size={15} /> BioClinicalBERT</span>
+        <span><Activity size={15} /> XGBoost Vitals</span>
+        <span><MessageCircle size={15} /> FAISS + Ollama RAG</span>
+        <span><Zap size={15} /> WebSocket Live</span>
+        <span><Lock size={15} /> 100% Local</span>
+      </div>
+
+      {/* ════════════════════════════════
+          4 AI STEPS
+      ════════════════════════════════ */}
+      <section className="lp-steps-section">
+        <div className="lp-section-header">
+          <div className="lp-section-overline">How It Works</div>
+          <h2 className="lp-section-title">4 AI Engines. One Nervous System.</h2>
+          <p className="lp-section-sub">
+            From spoken voice to structured clinical output — Triage.OS handles the
+            complexity so clinicians can focus on what matters.
+          </p>
+        </div>
+        <div className="lp-steps-grid">
+          <div className="lp-step-card">
+            <div className="lp-step-icon-wrap lp-step-icon-green">
+              <Mic size={20} />
+            </div>
+            <div className="lp-step-num">Step 01</div>
+            <div className="lp-step-title">Speak Your Notes</div>
+            <p className="lp-step-desc">Nurses dictate shift notes verbally. Whisper ASR transcribes speech locally — no cloud, no latency.</p>
+            <div className="lp-chips"><span>Whisper</span><span>spaCy</span><span>NER</span></div>
           </div>
-          <div className="landing-stat animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            <span className="landing-stat-num">4.3 hrs</span>
-            <span className="landing-stat-label">lost to documentation per shift</span>
+          <div className="lp-step-card lp-step-card-active">
+            <div className="lp-step-icon-wrap lp-step-icon-white">
+              <Shield size={20} />
+            </div>
+            <div className="lp-step-num">Step 02</div>
+            <div className="lp-step-title">AI Classification</div>
+            <p className="lp-step-desc">BioClinicalBERT classifies medication urgency into STAT, Urgent, and Routine in real time with ONNX inference.</p>
+            <div className="lp-chips lp-chips-dark"><span>BioClinicalBERT</span><span>ONNX</span></div>
           </div>
-          <div className="landing-stat animate-slide-up" style={{ animationDelay: '0.2s' }}>
-            <span className="landing-stat-num">1 in 5</span>
-            <span className="landing-stat-label">handoffs miss critical info</span>
+          <div className="lp-step-card">
+            <div className="lp-step-icon-wrap lp-step-icon-red">
+              <Activity size={20} />
+            </div>
+            <div className="lp-step-num">Step 03</div>
+            <div className="lp-step-title">Risk Scoring</div>
+            <p className="lp-step-desc">XGBoost scores each patient P1–P5 from vitals, meds, and history. WebSocket pushes updates every 3s.</p>
+            <div className="lp-chips"><span>XGBoost</span><span>FastAPI</span><span>WebSocket</span></div>
+          </div>
+          <div className="lp-step-card">
+            <div className="lp-step-icon-wrap lp-step-icon-green">
+              <MessageCircle size={20} />
+            </div>
+            <div className="lp-step-num">Step 04</div>
+            <div className="lp-step-title">NurseChat RAG</div>
+            <p className="lp-step-desc">Ask any clinical question. FAISS retrieves relevant patient records, Ollama generates grounded answers locally.</p>
+            <div className="lp-chips"><span>FAISS</span><span>Ollama</span><span>RAG</span></div>
           </div>
         </div>
       </section>
 
-      {/* Section 3 — AI Engines */}
-      <section className="landing-features-section">
-        <h2 className="landing-section-title">Four AI systems. One nervous system.</h2>
-        <div className="landing-features-grid">
-          <div className="landing-feature-card card">
-            <div className="landing-feature-stripe" style={{ background: 'var(--green-primary)' }} />
-            <Mic size={36} style={{ color: 'var(--green-primary)' }} />
-            <h3>Voice → SOAP Notes</h3>
-            <p className="text-body">Speak naturally. Whisper transcribes, spaCy extracts entities, and structured SOAP notes appear in seconds.</p>
-            <div className="landing-tech-chips">
-              <span className="landing-chip">Whisper</span>
-              <span className="landing-chip">spaCy</span>
-              <span className="landing-chip">NER</span>
-            </div>
+      {/* ════════════════════════════════
+          MODULES / "DOCTORS" GRID
+      ════════════════════════════════ */}
+      <section className="lp-modules-section">
+        <div className="lp-modules-header">
+          <div className="lp-modules-header-left">
+            <div className="lp-section-overline lp-overline-lime">Meet The Modules</div>
+            <h2 className="lp-modules-title">
+              <span>We're Dedicated To</span>
+              <span>Your Ward's Efficiency</span>
+            </h2>
           </div>
-          <div className="landing-feature-card card">
-            <div className="landing-feature-stripe" style={{ background: 'var(--risk-p2)' }} />
-            <Shield size={36} style={{ color: 'var(--risk-p2)' }} />
-            <h3>Medication Urgency</h3>
-            <p className="text-body">BioClinicalBERT classifies medication urgency into STAT, Urgent, and Routine in real time.</p>
-            <div className="landing-tech-chips">
-              <span className="landing-chip">BioClinicalBERT</span>
-              <span className="landing-chip">ONNX</span>
-            </div>
-          </div>
-          <div className="landing-feature-card card">
-            <div className="landing-feature-stripe" style={{ background: 'var(--risk-p1)' }} />
-            <Activity size={36} style={{ color: 'var(--risk-p1)' }} />
-            <h3>Patient Risk Scoring</h3>
-            <p className="text-body">Real-time P1-P5 classification from vitals, meds, and history. WebSocket updates every 3 seconds.</p>
-            <div className="landing-tech-chips">
-              <span className="landing-chip">XGBoost</span>
-              <span className="landing-chip">WebSocket</span>
-              <span className="landing-chip">FastAPI</span>
-            </div>
-          </div>
-          <div className="landing-feature-card card">
-            <div className="landing-feature-stripe" style={{ background: 'var(--green-primary)' }} />
-            <MessageCircle size={36} style={{ color: 'var(--green-primary)' }} />
-            <h3>NurseChat RAG</h3>
-            <p className="text-body">Ask any question. FAISS retrieves relevant patient data, Ollama generates grounded clinical answers.</p>
-            <div className="landing-tech-chips">
-              <span className="landing-chip">FAISS</span>
-              <span className="landing-chip">Ollama</span>
-              <span className="landing-chip">RAG</span>
-            </div>
+          <div className="lp-nav-arrows">
+            <button className="lp-arrow-btn"><ChevronLeft size={16} /></button>
+            <button className="lp-arrow-btn lp-arrow-btn-active"><ChevronRight size={16} /></button>
           </div>
         </div>
-      </section>
-
-      {/* Section 4 — Dashboard Preview (Dark) */}
-      <section className="landing-preview-section">
-        <h2 className="landing-section-title" style={{ color: '#fff' }}>This is the ward, live.</h2>
-        <p className="landing-preview-sub">Every number updates every 3 seconds.</p>
-        <div className="landing-browser-chrome">
-          <div className="landing-browser-dots">
-            <span /><span /><span />
-          </div>
-          <div className="landing-browser-url">triage.os/dashboard</div>
+        <div className="lp-modules-grid">
+          {[
+            { icon: <Mic size={28} />, title: 'Voice Transcription', sub: 'Whisper ASR', color: 'var(--green-primary)', bg: 'rgba(143,209,79,0.12)' },
+            { icon: <Shield size={28} />, title: 'Medication Urgency', sub: 'BioClinicalBERT', color: 'var(--risk-p2)', bg: 'rgba(249,115,22,0.12)' },
+            { icon: <Activity size={28} />, title: 'Patient Risk Score', sub: 'XGBoost Model', color: 'var(--risk-p1)', bg: 'rgba(239,68,68,0.12)' },
+            { icon: <MessageCircle size={28} />, title: 'NurseChat RAG', sub: 'FAISS + Ollama', color: 'var(--green-primary)', bg: 'rgba(143,209,79,0.12)' },
+            { icon: <ClipboardList size={28} />, title: 'SOAP Note Gen', sub: 'spaCy + NER', color: '#60a5fa', bg: 'rgba(96,165,250,0.12)' },
+            { icon: <BarChart2 size={28} />, title: 'Admin Dashboard', sub: 'Live Analytics', color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
+            { icon: <Users size={28} />, title: 'Shift Coordinator', sub: 'Kanban Board', color: 'var(--risk-p2)', bg: 'rgba(249,115,22,0.12)' },
+            { icon: <Zap size={28} />, title: 'WebSocket Engine', sub: 'FastAPI + Redis', color: 'var(--green-primary)', bg: 'rgba(143,209,79,0.12)' },
+          ].map((m, i) => (
+            <div className="lp-module-card" key={i}>
+              <div className="lp-module-icon" style={{ background: m.bg, color: m.color }}>
+                {m.icon}
+              </div>
+              <div className="lp-module-info">
+                <div className="lp-module-name">{m.title}</div>
+                <div className="lp-module-role">{m.sub}</div>
+              </div>
+            </div>
+          ))}
         </div>
-        <div className="landing-preview-callouts">
-          <div className="landing-callout" style={{ left: '10%', top: '20%' }}>
-            <span className="landing-callout-num">1</span>
-            <span>Live vitals WebSocket</span>
-          </div>
-          <div className="landing-callout" style={{ right: '15%', top: '30%' }}>
-            <span className="landing-callout-num">2</span>
-            <span>AI risk score (P1/P2)</span>
-          </div>
-          <div className="landing-callout" style={{ left: '20%', bottom: '20%' }}>
-            <span className="landing-callout-num">3</span>
-            <span>SOAP note generation</span>
-          </div>
-          <div className="landing-callout" style={{ right: '10%', bottom: '15%' }}>
-            <span className="landing-callout-num">4</span>
-            <span>NurseChat RAG</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Section 5 — Bounty Proof */}
-      <section className="landing-bounty-section">
-        <div className="landing-bounty-grid">
-          <div className="landing-bounty-card card-dark">
-            <Zap size={24} style={{ color: 'var(--green-primary)' }} />
-            <h3>LIVE-WIRE BOUNTY</h3>
-            <p>WebSocket vitals stream updates every 3s</p>
-            <p className="text-timestamp" style={{ color: 'var(--text-on-dark-muted)' }}>FastAPI · React · WebSocket</p>
-            <span className="landing-bounty-check">✓ Eligible</span>
-          </div>
-          <div className="landing-bounty-card card-dark">
-            <Lock size={24} style={{ color: 'var(--green-primary)' }} />
-            <h3>EDGE BOUNTY</h3>
-            <p>100% local inference — zero external API calls</p>
-            <p className="text-timestamp" style={{ color: 'var(--text-on-dark-muted)' }}>Whisper · FAISS · Ollama</p>
-            <span className="landing-bounty-check">✓ Eligible</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Section 6 — Final CTA */}
-      <section className="landing-final-cta">
-        <div className="cta-blob blob-1" />
-        <div className="cta-blob blob-2" />
-        <div className="cta-blob blob-3" />
-        <div className="cta-blob blob-4" />
-        <div className="landing-final-content">
-          <h2 className="landing-final-title">
-            triage<span style={{ color: 'var(--green-dark)' }}>.os</span>
-          </h2>
-          <p className="landing-final-sub">The ward doesn't wait.</p>
-          <button className="btn btn-on-dark btn-lg" onClick={() => navigate('/dashboard')}>
-            Enter Dashboard <ArrowRight size={16} />
+        <div className="lp-modules-cta">
+          <button className="lp-btn-dark lp-btn-lg" onClick={() => navigate('/dashboard')}>
+            Explore all modules
+            <span className="lp-btn-dark-arrow"><ArrowRight size={12} /></span>
           </button>
         </div>
       </section>
+
+      {/* ════════════════════════════════
+          TOGETHER SECTION
+      ════════════════════════════════ */}
+      <section className="lp-together-section">
+        <div className="lp-together-left">
+          <div className="lp-section-overline lp-overline-muted">We're Always With You</div>
+          <h2 className="lp-together-title">
+            Together, We Can<br />Achieve Optimal<br />Patient Outcomes
+          </h2>
+          <p className="lp-together-desc">
+            Triage.OS empowers every member of the care team — nurses, doctors, and admins —
+            with real-time AI insights, all running locally for complete privacy.
+          </p>
+          <ul className="lp-feature-list">
+            <li><span className="lp-check"><Check size={11} /></span>Real-time vitals analytics via WebSocket</li>
+            <li><span className="lp-check"><Check size={11} /></span>AI medication urgency classifier</li>
+            <li><span className="lp-check"><Check size={11} /></span>100% local — zero data leaves the ward</li>
+          </ul>
+        </div>
+        <div className="lp-together-right">
+          {/* Dashboard phone mockup */}
+          <div className="lp-phone-mockup">
+            <div className="lp-phone-screen">
+              <div className="lp-phone-header">
+                <PulseDot />
+                <span className="lp-label-green" style={{ fontSize: 9 }}>TRIAGE.OS LIVE</span>
+              </div>
+              <div className="lp-phone-vitals">
+                <div className="lp-phone-vital-row">
+                  <span className="lp-label-dim">Patient Risk</span>
+                  <span className="lp-badge-p1" style={{ fontSize: 9 }}>P1 CRITICAL</span>
+                </div>
+                <div className="lp-phone-ekg">
+                  <svg viewBox="0 0 200 30" preserveAspectRatio="none" width="100%" height="30">
+                    <polyline points="0,15 20,15 35,4 42,26 49,4 60,15 80,15 95,7 102,23 109,7 120,15 140,15 155,5 162,25 169,5 180,15 200,15"
+                      fill="none" stroke="var(--green-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              </div>
+              <div className="lp-phone-stats">
+                <div><span className="lp-num-red" style={{ fontSize: 18, fontWeight: 800 }}>112</span><br /><span style={{ fontSize: 9, color: 'var(--text-secondary)' }}>HR bpm</span></div>
+                <div><span className="lp-num-orange" style={{ fontSize: 18, fontWeight: 800 }}>91%</span><br /><span style={{ fontSize: 9, color: 'var(--text-secondary)' }}>SpO2</span></div>
+                <div><span className="lp-num-green" style={{ fontSize: 14, fontWeight: 800 }}>120/80</span><br /><span style={{ fontSize: 9, color: 'var(--text-secondary)' }}>BP mmHg</span></div>
+              </div>
+              <div className="lp-phone-btn">View Full Dashboard</div>
+            </div>
+          </div>
+          {/* floating badges */}
+          <div className="lp-float-badge lp-float-badge-1"><Check size={12} /> SOAP Note Generated</div>
+          <div className="lp-float-badge lp-float-badge-2"><Zap size={12} /> Shift Swap Confirmed</div>
+          <div className="lp-star lp-star-1">✦</div>
+          <div className="lp-star lp-star-2">★</div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════
+          BLOG GRID
+      ════════════════════════════════ */}
+      <section className="lp-blog-section">
+        <div className="lp-section-header">
+          <div className="lp-section-overline">Knowledge Hub</div>
+          <h2 className="lp-section-title">Our Features Blog</h2>
+          <p className="lp-section-sub">Stay updated on AI in healthcare, workflow automation, and the latest from Triage.OS.</p>
+        </div>
+        <div className="lp-blog-grid">
+          {[
+            { color: 'linear-gradient(135deg,#1a2f1a,#0f2a2f)', accent: 'var(--green-primary)', date: '12 Mar 2025', title: 'AI-Driven Triage: How ML Transforms Emergency Care', excerpt: 'How Triage.OS reduces manual triage errors and speeds up patient prioritization in busy ERs.' },
+            { color: 'linear-gradient(135deg,#1a1f2f,#0f1a2f)', accent: '#60a5fa', date: '18 Mar 2025', title: 'WebSockets in Healthcare: Real-Time Patient Kanban', excerpt: 'A deep-dive into how Triage.OS uses WebSocket technology for instant updates across all panels.' },
+            { color: 'linear-gradient(135deg,#2a1a0f,#1f1505)', accent: 'var(--risk-p2)', date: '25 Mar 2025', title: 'Voice-to-Handoff: Why Spoken Notes Are the Future', excerpt: 'How voice recognition cuts documentation time and minimizes human error in shift handoffs.' },
+            { color: 'linear-gradient(135deg,#1f0f1a,#160a14)', accent: '#a78bfa', date: '2 Apr 2025', title: 'Medication Risk Classification with Local LLMs', excerpt: 'Running AI on-premises ensures HIPAA compliance while delivering accurate urgency classification.' },
+            { color: 'linear-gradient(135deg,#0f1f1a,#081510)', accent: 'var(--green-primary)', date: '8 Apr 2025', title: 'Patient Risk Scoring from Simulated Vitals', excerpt: 'How Triage.OS interprets vital sign patterns to assign risk scores before a doctor arrives.' },
+            { color: 'linear-gradient(135deg,#1a2010,#111808)', accent: '#4ade80', date: '14 Apr 2025', title: 'Nurse Shift Swaps Without the Chaos', excerpt: 'Triage.OS\'s shift coordination tools eliminate scheduling conflicts and missed handoffs.' },
+          ].map((post, i) => (
+            <div className="lp-blog-card" key={i}>
+              <div className="lp-blog-img" style={{ background: post.color }}>
+                <div className="lp-blog-img-deco" style={{ color: post.accent }}>
+                  <Activity size={32} opacity={0.3} />
+                </div>
+                <span className="lp-blog-tag" style={{ color: post.accent, borderColor: post.accent }}>
+                  Triage.OS
+                </span>
+              </div>
+              <div className="lp-blog-body">
+                <div className="lp-blog-date">{post.date}</div>
+                <div className="lp-blog-title">{post.title}</div>
+                <div className="lp-blog-excerpt">{post.excerpt}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="lp-blog-cta">
+          <button className="lp-btn-dark lp-btn-lg">
+            Explore all articles
+            <span className="lp-btn-dark-arrow"><ArrowRight size={12} /></span>
+          </button>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════
+          TESTIMONIAL
+      ════════════════════════════════ */}
+      <section className="lp-testimonial-section">
+        <div className="lp-testimonial-left">
+          <h2>What People Are Saying<br />About Triage.OS</h2>
+          <p>From frontline nurses to hospital administrators — hear how Triage.OS has transformed clinical workflows.</p>
+        </div>
+        <div className="lp-testimonial-right">
+          <div className="lp-testimonial-card">
+            <span className="lp-quote-mark">"</span>
+            <p className="lp-quote-text">
+              Triage.OS cut our handoff documentation time by 60%. The AI picks up on urgency
+              signals that nurses used to have to manually flag. I'm on the road to delivering
+              better patient outcomes every single shift.
+            </p>
+            <div className="lp-quote-author">
+              <div className="lp-quote-avatar">AR</div>
+              <div>
+                <div className="lp-quote-name">Ayush Rathi</div>
+                <div className="lp-quote-role">Senior ER Nurse, Mumbai General</div>
+              </div>
+            </div>
+            <div className="lp-testimonial-nav">
+              <button className="lp-arrow-btn"><ChevronLeft size={15} /></button>
+              <button className="lp-arrow-btn lp-arrow-btn-active"><ChevronRight size={15} /></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════
+          BOUNTY PROOF
+      ════════════════════════════════ */}
+      <section className="lp-bounty-section">
+        <div className="lp-section-header" style={{ marginBottom: 40 }}>
+          <div className="lp-section-overline lp-overline-lime">Bounty Eligibility</div>
+          <h2 className="lp-section-title lp-title-light">Built for the Hackathon</h2>
+        </div>
+        <div className="lp-bounty-grid">
+          <div className="lp-bounty-card">
+            <Zap size={22} className="lp-bounty-icon" />
+            <h3>LIVE-WIRE BOUNTY</h3>
+            <p>WebSocket vitals stream updates every 3s — patient risk scores pushed live.</p>
+            <p className="lp-bounty-stack">FastAPI · React · WebSocket</p>
+            <span className="lp-bounty-badge">✓ Eligible</span>
+          </div>
+          <div className="lp-bounty-card">
+            <Lock size={22} className="lp-bounty-icon" />
+            <h3>EDGE BOUNTY</h3>
+            <p>100% local inference — zero external API calls, runs entirely on-device.</p>
+            <p className="lp-bounty-stack">Whisper · FAISS · Ollama</p>
+            <span className="lp-bounty-badge">✓ Eligible</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════
+          FOOTER
+      ════════════════════════════════ */}
+      <footer className="lp-footer">
+        <div className="lp-footer-top">
+          <div className="lp-footer-brand">
+            <a className="lp-logo" href="#" style={{ marginBottom: 14, display: 'inline-flex' }}>
+              <span className="lp-logo-icon"><Activity size={15} strokeWidth={2.5} /></span>
+              triage<span className="lp-logo-accent">.os</span>
+            </a>
+            <p>AI hospital workflow assistant — local, fast, and built for every member of the care team.</p>
+            <div className="lp-socials">
+              <div className="lp-social-btn"><span>X</span></div>
+              <div className="lp-social-btn"><span>GH</span></div>
+              <div className="lp-social-btn"><span>IN</span></div>
+            </div>
+          </div>
+          <div className="lp-footer-col">
+            <h4>Quick Menu</h4>
+            <ul>
+              <li><a href="#">Home</a></li>
+              <li><a href="#">About</a></li>
+              <li><a href="#">Modules</a></li>
+              <li><a href="#">Blog</a></li>
+              <li><a href="#">Contact</a></li>
+            </ul>
+          </div>
+          <div className="lp-footer-col">
+            <h4>Support</h4>
+            <ul>
+              <li><a href="#">Documentation</a></li>
+              <li><a href="#">Support Center</a></li>
+              <li><a href="#">GitHub Repo</a></li>
+              <li><a href="#">Report a Bug</a></li>
+            </ul>
+          </div>
+          <div className="lp-footer-col">
+            <h4>Contact</h4>
+            <ul>
+              <li><a href="#">hello@triage.os</a></li>
+              <li><a href="#">Discord Community</a></li>
+              <li><a href="#">Privacy Policy</a></li>
+              <li><a href="#">Terms of Use</a></li>
+            </ul>
+          </div>
+        </div>
+        <div className="lp-footer-bottom">
+          <span>© 2025 Triage.OS — AyushRBuilds. All Rights Reserved.</span>
+          <span>Built with ❤️ for healthcare workers everywhere.</span>
+        </div>
+      </footer>
+
     </div>
   );
 }
