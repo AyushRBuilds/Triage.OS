@@ -40,8 +40,7 @@ export default function LandingPage() {
           <li><a href="#contact">Contact</a></li>
         </ul>
         <div className="lp-nav-actions">
-          <button className="lp-btn-ghost">Log in</button>
-
+          <button className="lp-btn-ghost" onClick={() => navigate('/login')}>Log in</button>
         </div>
       </nav>
 
@@ -65,8 +64,8 @@ export default function LandingPage() {
               and answers any question from live ward data. 100% local.
             </p>
             <div className="lp-hero-ctas">
-              <button className="lp-btn-lime lp-btn-lg" onClick={() => navigate('/dashboard')}>
-                Enter Dashboard <ArrowRight size={15} />
+              <button className="lp-btn-lime lp-btn-lg" onClick={() => navigate('/login')}>
+                Get Started <ArrowRight size={15} />
               </button>
               <button className="lp-btn-outline lp-btn-lg">
                 <Play size={14} /> Watch Demo

@@ -88,7 +88,7 @@ export default function Sidebar() {
           <span className="sidebar-indicator" />
           <Settings size={22} strokeWidth={1.8} />
         </NavLink>
-        <button className="sidebar-item sidebar-logout" title="Logout" onClick={logout}>
+        <button className="sidebar-item sidebar-logout" title="Logout" onClick={async () => { await logout(); }}>
           <span className="sidebar-indicator" />
           <LogOut size={22} strokeWidth={1.8} />
         </button>
