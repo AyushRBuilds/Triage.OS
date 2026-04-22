@@ -4,6 +4,7 @@ import Sidebar from './components/layout/Sidebar';
 import TopBar from './components/layout/TopBar';
 import VoiceAssistant from './components/layout/FloatingChat';
 import LoginPage from './components/auth/LoginPage';
+import SignUpPage from './components/auth/SignUpPage';
 import LandingPage from './components/LandingPage';
 import NurseDashboard from './components/dashboards/NurseDashboard';
 import DoctorDashboard from './components/dashboards/DoctorDashboard';
@@ -53,6 +54,13 @@ export default function App() {
       return <Navigate to={dashboardMap[user?.role] || '/nurse/dashboard'} replace />;
     }
     return <LoginPage />;
+  }
+  if (location.pathname === '/signup') {
+    if (isAuthenticated) {
+      const dashboardMap = { nurse: '/nurse/dashboard', doctor: '/doctor/dashboard', admin: '/admin/dashboard' };
+      return <Navigate to={dashboardMap[user?.role] || '/nurse/dashboard'} replace />;
+    }
+    return <SignUpPage />;
   }
 
   return (

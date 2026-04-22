@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, LogOut, ChevronDown, User, X, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
+import { Search, Bell, LogOut, ChevronDown, User, X, AlertTriangle, Clock, CheckCircle, PenLine } from 'lucide-react';
+import FloatingNotes from './FloatingNotes';
 import { useAuth } from '../../contexts/AuthContext';
 import { patients } from '../../data/mockData';
 import './TopBar.css';
@@ -18,6 +19,8 @@ export default function TopBar() {
   const [showResults, setShowResults] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+  const notesRef = useRef(null);
   const [dismissedNotifs, setDismissedNotifs] = useState([]);
   const searchRef = useRef(null);
   const profileRef = useRef(null);
@@ -31,6 +34,7 @@ export default function TopBar() {
       if (searchRef.current && !searchRef.current.contains(e.target)) setShowResults(false);
       if (profileRef.current && !profileRef.current.contains(e.target)) setShowProfile(false);
       if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifs(false);
+      if (notesRef.current && !notesRef.current.contains(e.target)) setShowNotes(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -51,8 +55,8 @@ export default function TopBar() {
     navigate(`/vitals?patient=${patient.id}`);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 
@@ -117,6 +121,19 @@ export default function TopBar() {
 
       {/* Right section */}
       <div className="topbar-right">
+        {/* Notes button */}
+        <div className="topbar-notif-wrapper" ref={notesRef}>
+          <button
+            className="topbar-bell"
+            id="notes-btn"
+            onClick={() => setShowNotes(!showNotes)}
+            title="Quick Notes"
+          >
+            <PenLine size={20} strokeWidth={1.8} />
+          </button>
+          {showNotes && <FloatingNotes isInline onClose={() => setShowNotes(false)} />}
+        </div>
+
         {/* Notification bell — click-only, no auto-open */}
         <div className="topbar-notif-wrapper" ref={notifRef}>
           <button
