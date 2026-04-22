@@ -208,7 +208,7 @@ export default function LandingPage() {
             <div className="lp-step-num">Step 02</div>
             <div className="lp-step-title">AI Classification</div>
             <p className="lp-step-desc">BioClinicalBERT classifies medication urgency into STAT, Urgent, and Routine in real time with ONNX inference.</p>
-            <div className="lp-chips lp-chips-dark"><span>BioClinicalBERT</span><span>ONNX</span></div>
+            <div className="lp-chips "><span>BioClinicalBERT</span><span>ONNX</span></div>
           </div>
           <div className="lp-step-card">
             <div className="lp-step-icon-wrap lp-step-icon-red">
