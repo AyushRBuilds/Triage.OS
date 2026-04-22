@@ -885,21 +885,23 @@ section {
 }
 
 .lp-module-card {
-  background: var(--bg-card, #1a261a);
-  border: 1px solid rgba(255, 255, 255, .07);
+  background: var(--bg-card);
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
   border-radius: 14px;
-  padding: 20px;
+  padding: 24px 20px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 14px;
-  transition: transform .2s, box-shadow .2s;
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
   cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .lp-module-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, .3);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(143, 209, 79, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
+  border-color: var(--green-primary);
 }
 
 .lp-module-icon {
