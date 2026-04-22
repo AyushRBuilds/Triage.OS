@@ -71,14 +71,22 @@ export async function getPatientById(id) {
 }
 
 export async function updatePatientVitals(patientId, vitals) {
-  const { data, error } = await supabase
-    .from('vitals')
-    .upsert({ patient_id: patientId, ...vitals, recorded_at: new Date().toISOString() }, {
-      onConflict: 'patient_id',
-    });
+  // Now routing through our Python AI backend to get real-time risk scoring
+  const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/vitals`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      patient_id: patientId,
+      heart_rate: vitals.hr,
+      spo2: vitals.spo2,
+      blood_pressure_sys: vitals.bp_sys,
+      blood_pressure_dia: vitals.bp_dia,
+      temperature: vitals.temp,
+    }),
+  });
 
-  if (error) handleError(error, 'updatePatientVitals');
-  return data;
+  if (!res.ok) throw new Error('Failed to update vitals via AI backend');
+  return res.json();
 }
 
 export async function addPatient(patient) {
@@ -249,15 +257,14 @@ export async function createSoapNote(note) {
   return data;
 }
 
-export async function transcribeAudio(audioBlob) {
-  // Still uses a backend endpoint — AI team will implement this
-  const formData = new FormData();
-  formData.append('audio', audioBlob);
-  const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/soap-notes/transcribe`, {
+export async function processSoapRawText(text) {
+  // Call the AI backend (ML team endpoint) to run NER + Urgency Classifier
+  const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/soap/process_raw`, {
     method: 'POST',
-    body: formData,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ raw_text: text }),
   });
-  if (!res.ok) throw new Error('Transcription failed');
+  if (!res.ok) throw new Error('Failed to process SOAP text via AI pipeline');
   return res.json();
 }
 
@@ -279,19 +286,20 @@ export async function getChatHistory() {
   }));
 }
 
-export async function sendChatMessage(message) {
-  // Save user message first
+export async function sendChatMessage(message, patientId = null) {
+  // Save user message first (Supabase log)
   await supabase.from('chat_messages').insert([{ role: 'user', text: message }]);
 
   // Call the AI backend (ML team endpoint)
-  const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/chat/send`, {
+  const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message, patient_id: patientId }),
   });
 
   if (!res.ok) throw new Error('Chat request failed');
   const reply = await res.json();
+
 
   // Save AI response to DB
   const { data, error } = await supabase

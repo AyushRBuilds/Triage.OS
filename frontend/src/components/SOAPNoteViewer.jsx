@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Mic, MicOff, Save, Trash2, Clock, ChevronDown, FileText, Plus, Edit3, X } from 'lucide-react';
-import { getSoapNotes, createSoapNote, deleteSoapNote, getPatients, transcribeAudio } from '../api/services';
+import { getSoapNotes, createSoapNote, deleteSoapNote, getPatients, processSoapRawText } from '../api/services';
 import { supabase } from '../api/supabaseClient';
 import './SOAPNoteViewer.css';
 
@@ -45,38 +45,81 @@ export default function SOAPNoteViewer() {
 
   const selectedPatientData = patients.find((p) => p.id === selectedPatient);
 
-  const handleMicClick = async () => {
+  const recognitionRef = useRef(null);
+
+  const handleMicClick = () => {
     if (isRecording) {
+      if (recognitionRef.current) recognitionRef.current.stop();
       setIsRecording(false);
-      const result = await transcribeAudio(null);
-      setTranscript(result);
-    } else {
-      setIsRecording(true);
-      setTranscript(null);
+      return;
     }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser. Please use Chrome/Edge.');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    let finalFinalTranscript = '';
+
+    recognition.onstart = () => setIsRecording(true);
+
+    recognition.onresult = (event) => {
+      let interimTranscript = '';
+      let finalTranscriptChunk = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalTranscriptChunk += ' ' + event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+      if (finalTranscriptChunk) {
+         finalFinalTranscript += finalTranscriptChunk;
+      }
+      setTranscript({ text: (finalFinalTranscript + ' ' + interimTranscript).trim() });
+    };
+
+    recognition.onerror = () => setIsRecording(false);
+    recognition.onend = () => setIsRecording(false);
+
+    recognitionRef.current = recognition;
+    setTranscript({ text: 'Listening...' });
+    recognition.start();
   };
 
-  // Save voice-transcribed note to Supabase
+  // Save voice-transcribed note to Supabase after processing with AI Models
   const handleSave = async () => {
-    if (!transcript) return;
+    if (!transcript?.text || transcript.text === 'Listening...') return;
     setSaving(true);
     try {
       const patientId = selectedPatient !== 'all' ? selectedPatient : patients[0]?.id;
       const patient = patients.find((p) => p.id === patientId);
+
+      // Run generated text through AI Pipeline (NER + Urgency Classifier)
+      const processed = await processSoapRawText(transcript.text);
+
+      // Save structured note to Supabase DB
       const saved = await createSoapNote({
         patient_id: patientId,
-        subjective: transcript.text,
-        objective: '',
-        assessment: '',
-        plan: '',
-        entities: transcript.entities || {},
+        subjective: processed.subjective || transcript.text,
+        objective: processed.objective || '',
+        assessment: processed.assessment || '',
+        plan: processed.plan || '',
+        entities: processed.entities || {},
       });
       setNotes((prev) => [{ ...saved, patientName: patient?.name || '' }, ...prev]);
       setTranscript(null);
       setIsRecording(false);
     } catch (err) {
-      console.error('Failed to save note:', err);
-      alert('Could not save note.');
+      console.error('Failed to process/save note:', err);
+      alert('Could not process/save note.');
     } finally {
       setSaving(false);
     }
