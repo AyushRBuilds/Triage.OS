@@ -29,13 +29,15 @@ export default function LandingPage() {
           <span className="lp-logo-icon">
             <Activity size={16} strokeWidth={2.5} />
           </span>
-          triage<span className="lp-logo-accent">.os</span>
+          <span className="lp-logo-text">
+            Triage<span className="lp-logo-accent">OS</span>
+          </span>
         </a>
         <ul className="lp-nav-links">
-          <li><a href="#">About</a></li>
-          <li><a href="#">Modules</a></li>
-          <li><a href="#">Blog</a></li>
-          <li><a href="#">Contact</a></li>
+          <li><a href="#workflow">Workflow</a></li>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#modules">Modules</a></li>
+          <li><a href="#contact">Contact</a></li>
         </ul>
         <div className="lp-nav-actions">
           <button className="lp-btn-ghost">Log in</button>
@@ -131,7 +133,7 @@ export default function LandingPage() {
       {/* ════════════════════════════════
           STATS BAND
       ════════════════════════════════ */}
-      <section className="lp-stats-band">
+      <section className="lp-stats-band" id="workflow">
         <div className="lp-stats-left">
           <h2>Your Bridge to <span className="lp-underline">Smarter</span><br />Hospital Operations</h2>
           <button className="lp-btn-dark lp-btn-lg" onClick={() => navigate('/dashboard')}>
@@ -180,7 +182,7 @@ export default function LandingPage() {
       {/* ════════════════════════════════
           4 AI STEPS
       ════════════════════════════════ */}
-      <section className="lp-steps-section">
+      <section className="lp-steps-section" id="features">
         <div className="lp-section-header">
           <div className="lp-section-overline">How It Works</div>
           <h2 className="lp-section-title">4 AI Engines. One Nervous System.</h2>
@@ -199,14 +201,14 @@ export default function LandingPage() {
             <p className="lp-step-desc">Nurses dictate shift notes verbally. Whisper ASR transcribes speech locally — no cloud, no latency.</p>
             <div className="lp-chips"><span>Whisper</span><span>spaCy</span><span>NER</span></div>
           </div>
-          <div className="lp-step-card lp-step-card-active">
+          <div className="lp-step-card">
             <div className="lp-step-icon-wrap lp-step-icon-white">
               <Shield size={20} />
             </div>
             <div className="lp-step-num">Step 02</div>
             <div className="lp-step-title">AI Classification</div>
             <p className="lp-step-desc">BioClinicalBERT classifies medication urgency into STAT, Urgent, and Routine in real time with ONNX inference.</p>
-            <div className="lp-chips lp-chips-dark"><span>BioClinicalBERT</span><span>ONNX</span></div>
+            <div className="lp-chips "><span>BioClinicalBERT</span><span>ONNX</span></div>
           </div>
           <div className="lp-step-card">
             <div className="lp-step-icon-wrap lp-step-icon-red">
@@ -232,7 +234,7 @@ export default function LandingPage() {
       {/* ════════════════════════════════
           MODULES / "DOCTORS" GRID
       ════════════════════════════════ */}
-      <section className="lp-modules-section">
+      <section className="lp-modules-section" id="modules">
         <div className="lp-modules-header">
           <div className="lp-modules-header-left">
             <div className="lp-section-overline lp-overline-lime">Meet The Modules</div>
@@ -241,10 +243,7 @@ export default function LandingPage() {
               <span>Your Ward's Efficiency</span>
             </h2>
           </div>
-          <div className="lp-nav-arrows">
-            <button className="lp-arrow-btn"><ChevronLeft size={16} /></button>
-            <button className="lp-arrow-btn lp-arrow-btn-active"><ChevronRight size={16} /></button>
-          </div>
+
         </div>
         <div className="lp-modules-grid">
           {[
@@ -331,48 +330,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ════════════════════════════════
-          BLOG GRID
-      ════════════════════════════════ */}
-      <section className="lp-blog-section">
-        <div className="lp-section-header">
-          <div className="lp-section-overline">Knowledge Hub</div>
-          <h2 className="lp-section-title">Our Features Blog</h2>
-          <p className="lp-section-sub">Stay updated on AI in healthcare, workflow automation, and the latest from Triage.OS.</p>
-        </div>
-        <div className="lp-blog-grid">
-          {[
-            { color: 'linear-gradient(135deg,#1a2f1a,#0f2a2f)', accent: 'var(--green-primary)', date: '12 Mar 2025', title: 'AI-Driven Triage: How ML Transforms Emergency Care', excerpt: 'How Triage.OS reduces manual triage errors and speeds up patient prioritization in busy ERs.' },
-            { color: 'linear-gradient(135deg,#1a1f2f,#0f1a2f)', accent: '#60a5fa', date: '18 Mar 2025', title: 'WebSockets in Healthcare: Real-Time Patient Kanban', excerpt: 'A deep-dive into how Triage.OS uses WebSocket technology for instant updates across all panels.' },
-            { color: 'linear-gradient(135deg,#2a1a0f,#1f1505)', accent: 'var(--risk-p2)', date: '25 Mar 2025', title: 'Voice-to-Handoff: Why Spoken Notes Are the Future', excerpt: 'How voice recognition cuts documentation time and minimizes human error in shift handoffs.' },
-            { color: 'linear-gradient(135deg,#1f0f1a,#160a14)', accent: '#a78bfa', date: '2 Apr 2025', title: 'Medication Risk Classification with Local LLMs', excerpt: 'Running AI on-premises ensures HIPAA compliance while delivering accurate urgency classification.' },
-            { color: 'linear-gradient(135deg,#0f1f1a,#081510)', accent: 'var(--green-primary)', date: '8 Apr 2025', title: 'Patient Risk Scoring from Simulated Vitals', excerpt: 'How Triage.OS interprets vital sign patterns to assign risk scores before a doctor arrives.' },
-            { color: 'linear-gradient(135deg,#1a2010,#111808)', accent: '#4ade80', date: '14 Apr 2025', title: 'Nurse Shift Swaps Without the Chaos', excerpt: 'Triage.OS\'s shift coordination tools eliminate scheduling conflicts and missed handoffs.' },
-          ].map((post, i) => (
-            <div className="lp-blog-card" key={i}>
-              <div className="lp-blog-img" style={{ background: post.color }}>
-                <div className="lp-blog-img-deco" style={{ color: post.accent }}>
-                  <Activity size={32} opacity={0.3} />
-                </div>
-                <span className="lp-blog-tag" style={{ color: post.accent, borderColor: post.accent }}>
-                  Triage.OS
-                </span>
-              </div>
-              <div className="lp-blog-body">
-                <div className="lp-blog-date">{post.date}</div>
-                <div className="lp-blog-title">{post.title}</div>
-                <div className="lp-blog-excerpt">{post.excerpt}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="lp-blog-cta">
-          <button className="lp-btn-dark lp-btn-lg">
-            Explore all articles
-            <span className="lp-btn-dark-arrow"><ArrowRight size={12} /></span>
-          </button>
-        </div>
-      </section>
 
       {/* ════════════════════════════════
           TESTIMONIAL
@@ -396,10 +353,6 @@ export default function LandingPage() {
                 <div className="lp-quote-name">Ayush Rathi</div>
                 <div className="lp-quote-role">Senior ER Nurse, Mumbai General</div>
               </div>
-            </div>
-            <div className="lp-testimonial-nav">
-              <button className="lp-arrow-btn"><ChevronLeft size={15} /></button>
-              <button className="lp-arrow-btn lp-arrow-btn-active"><ChevronRight size={15} /></button>
             </div>
           </div>
         </div>
@@ -434,7 +387,7 @@ export default function LandingPage() {
       {/* ════════════════════════════════
           FOOTER
       ════════════════════════════════ */}
-      <footer className="lp-footer">
+      <footer className="lp-footer" id="contact">
         <div className="lp-footer-top">
           <div className="lp-footer-brand">
             <a className="lp-logo" href="#" style={{ marginBottom: 14, display: 'inline-flex' }}>
@@ -450,13 +403,10 @@ export default function LandingPage() {
           </div>
           <div className="lp-footer-col">
             <h4>Quick Menu</h4>
-            <ul>
-              <li><a href="#">Home</a></li>
-              <li><a href="#">About</a></li>
-              <li><a href="#">Modules</a></li>
-              <li><a href="#">Blog</a></li>
-              <li><a href="#">Contact</a></li>
-            </ul>
+            <li><a href="#">Home</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#modules">Modules</a></li>
+            <li><a href="#contact">Contact</a></li>
           </div>
           <div className="lp-footer-col">
             <h4>Support</h4>
@@ -478,10 +428,17 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="lp-footer-bottom">
-          <span>© 2025 Triage.OS — AyushRBuilds. All Rights Reserved.</span>
+          <span>© 2026 Triage.OS . All Rights Reserved.</span>
           <span>Built with ❤️ for healthcare workers everywhere.</span>
         </div>
       </footer>
+
+      <button
+        className="lp-scroll-top"
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      >
+        ↑
+      </button>
 
     </div>
   );
