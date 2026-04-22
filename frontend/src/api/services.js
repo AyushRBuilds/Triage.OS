@@ -351,6 +351,41 @@ export function subscribeToShiftSwaps(onUpdate) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// DELETE OPERATIONS
+// ══════════════════════════════════════════════════════════════
+
+export async function deleteSoapNote(noteId) {
+  const { error } = await supabase
+    .from('soap_notes')
+    .delete()
+    .eq('id', noteId);
+  if (error) handleError(error, 'deleteSoapNote');
+}
+
+export async function deleteTask(taskId) {
+  const { error } = await supabase
+    .from('tasks')
+    .delete()
+    .eq('id', taskId);
+  if (error) handleError(error, 'deleteTask');
+}
+
+export async function deletePatient(patientId) {
+  // Delete related records first (vitals, medications, tasks, soap_notes)
+  // then delete the patient. If you have ON DELETE CASCADE on FKs, skip these.
+  await supabase.from('vitals').delete().eq('patient_id', patientId);
+  await supabase.from('medications').delete().eq('patient_id', patientId);
+  await supabase.from('tasks').delete().eq('patient_id', patientId);
+  await supabase.from('soap_notes').delete().eq('patient_id', patientId);
+
+  const { error } = await supabase
+    .from('patients')
+    .delete()
+    .eq('id', patientId);
+  if (error) handleError(error, 'deletePatient');
+}
+
+// ══════════════════════════════════════════════════════════════
 // ANALYTICS
 // ══════════════════════════════════════════════════════════════
 

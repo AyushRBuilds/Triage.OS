@@ -130,10 +130,7 @@
   color: var(--text-secondary);
   transition: all 0.15s ease;
 }
-.topbar-bell:hover {
-  background: var(--green-light);
-  color: var(--text-primary);
-}
+
 .topbar-bell-badge {
   position: absolute;
   top: 4px;

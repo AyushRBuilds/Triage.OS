@@ -202,3 +202,28 @@
 .kanban-patient-badge {
   font-size: 10px;
 }
+
+.kanban-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.kanban-delete-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.15s ease;
+}
+.kanban-card:hover .kanban-delete-btn {
+  opacity: 1;
+}
+.kanban-delete-btn:hover {
+  background: #FEF2F2;
+  color: var(--risk-p1);
+}
