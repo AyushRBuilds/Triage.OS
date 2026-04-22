@@ -55,8 +55,8 @@ export default function TopBar() {
     navigate(`/vitals?patient=${patient.id}`);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 
