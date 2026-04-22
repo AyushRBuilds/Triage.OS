@@ -83,19 +83,10 @@ function NoteEditor({ initial, onSave, onCancel, linkedPatientName }) {
   const [isListening, setIsListening] = useState(false);
   const bodyRef = useRef(null);
   const recognitionRef = useRef(null);
-  const autosaveRef = useRef(null);
-
   // seed body
   useEffect(() => {
     if (bodyRef.current) bodyRef.current.innerHTML = initial?.content || '';
-    bodyRef.current?.focus();
   }, []);
-
-  // autosave while typing
-  const scheduleAutosave = () => {
-    clearTimeout(autosaveRef.current);
-    autosaveRef.current = setTimeout(handleSave, 2500);
-  };
 
   const handleSave = () => {
     const content = bodyRef.current?.innerHTML || '';
@@ -109,7 +100,6 @@ function NoteEditor({ initial, onSave, onCancel, linkedPatientName }) {
       patientName,
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
     });
-    clearTimeout(autosaveRef.current);
   };
 
   const applyFormat = (cmd) => {
@@ -137,57 +127,67 @@ function NoteEditor({ initial, onSave, onCancel, linkedPatientName }) {
 
   return (
     <div className="fn-editor" style={{ background: color }}>
-      <div className="fn-editor-header">
-        <input
-          className="fn-title-input"
-          placeholder="Note title…"
-          value={title}
-          onChange={e => { setTitle(e.target.value); scheduleAutosave(); }}
-          style={{ background: color }}
-        />
-        <div className="fn-editor-colors">
-          {NOTE_COLORS.map(c => (
-            <button key={c} className={`fn-color-swatch ${color === c ? 'selected' : ''}`}
-              style={{ background: c }} onClick={() => setColor(c)} type="button"/>
-          ))}
+      {/* Title + Colors */}
+      <div className="fn-editor-section">
+        <label className="fn-label">Title</label>
+        <div className="fn-editor-header">
+          <input
+            className="fn-title-input"
+            placeholder="Enter note title…"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            style={{ background: color }}
+          />
+          <div className="fn-editor-colors">
+            {NOTE_COLORS.map(c => (
+              <button key={c} className={`fn-color-swatch ${color === c ? 'selected' : ''}`}
+                style={{ background: c }} onClick={() => setColor(c)} type="button"/>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="fn-editor-meta">
-        {/* Category */}
-        <select className="fn-select" value={category} onChange={e => setCategory(e.target.value)}>
-          {CATEGORIES.filter(c => c !== 'All').map(c => <option key={c}>{c}</option>)}
-        </select>
-        {/* Priority */}
-        <select className="fn-select fn-priority-select" value={priority}
-          onChange={e => setPriority(e.target.value)}
-          style={{ color: PRIORITY_META[priority].color, background: PRIORITY_META[priority].bg }}>
-          {PRIORITIES.map(p => <option key={p}>{p}</option>)}
-        </select>
-        {/* Patient */}
-        <input className="fn-select" placeholder="Patient name…" value={patientName}
-          onChange={e => setPatientName(e.target.value)} list="fn-patient-list"/>
-        <datalist id="fn-patient-list">
-          {mockPatients.map(p => <option key={p.id} value={p.name}/>)}
-        </datalist>
+      {/* Meta */}
+      <div className="fn-editor-section">
+        <label className="fn-label">Details</label>
+        <div className="fn-editor-meta">
+          <select className="fn-select" value={category} onChange={e => setCategory(e.target.value)}>
+            {CATEGORIES.filter(c => c !== 'All').map(c => <option key={c}>{c}</option>)}
+          </select>
+          <select className="fn-select fn-priority-select" value={priority}
+            onChange={e => setPriority(e.target.value)}
+            style={{ color: PRIORITY_META[priority].color, background: PRIORITY_META[priority].bg }}>
+            {PRIORITIES.map(p => <option key={p}>{p}</option>)}
+          </select>
+          <input className="fn-select" placeholder="Link Patient…" value={patientName}
+            onChange={e => setPatientName(e.target.value)} list="fn-patient-list"/>
+          <datalist id="fn-patient-list">
+            {mockPatients.map(p => <option key={p.id} value={p.name}/>)}
+          </datalist>
+        </div>
       </div>
 
-      {/* Rich text area */}
-      <RichToolbar onFormat={applyFormat} />
-      <div
-        ref={bodyRef}
-        className="fn-body-editor"
-        contentEditable
-        suppressContentEditableWarning
-        onInput={scheduleAutosave}
-        data-placeholder="Write your note…"
-        style={{ background: color }}
-      />
+      {/* Content */}
+      <div className="fn-editor-section">
+        <label className="fn-label">Content</label>
+        <RichToolbar onFormat={applyFormat} />
+        <div
+          ref={bodyRef}
+          className="fn-body-editor"
+          contentEditable
+          suppressContentEditableWarning
+          data-placeholder="Write your note here…"
+          style={{ background: color }}
+        />
+      </div>
 
       {/* Tags */}
-      <input className="fn-tags-input" placeholder="Tags (comma-separated)…"
-        value={tags} onChange={e => setTags(e.target.value)}
-        style={{ background: color }}/>
+      <div className="fn-editor-section">
+        <label className="fn-label">Tags</label>
+        <input className="fn-tags-input" placeholder="e.g. medication, stat, observation (comma-separated)"
+          value={tags} onChange={e => setTags(e.target.value)}
+          style={{ background: color }}/>
+      </div>
 
       <div className="fn-editor-footer">
         <button type="button" className={`fn-voice-btn ${isListening ? 'active' : ''}`} onClick={toggleVoice}>
