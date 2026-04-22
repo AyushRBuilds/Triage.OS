@@ -22,8 +22,7 @@ class SOAPOut(SOAPCreate):
     id: int
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
 
 @router.get("/{patient_id}", response_model=list[SOAPOut])
