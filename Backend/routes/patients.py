@@ -19,12 +19,7 @@ class PatientOut(PatientCreate):
     id: int
     kanban_lane: str
 
-<<<<<<< HEAD
-    class Config:
-        orm_mode = True
-=======
     model_config = {"from_attributes": True}
->>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
 
 
 @router.get("/", response_model=list[PatientOut])

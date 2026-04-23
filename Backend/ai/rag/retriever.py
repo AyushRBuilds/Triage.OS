@@ -13,11 +13,17 @@ from typing import List, Dict
 
 INDEX_PATH = Path(__file__).parent / "faiss_index"
 
-
-import faiss
 import pickle
-import numpy as np
-from sentence_transformers import SentenceTransformer
+
+try:
+    import faiss
+except Exception:
+    faiss = None
+
+try:
+    from sentence_transformers import SentenceTransformer
+except Exception:
+    SentenceTransformer = None
 
 _model = None
 _index = None
@@ -25,6 +31,9 @@ _texts = None
 
 def _load_resources():
     global _model, _index, _texts
+    if faiss is None or SentenceTransformer is None:
+        return
+
     if _model is None:
         _model = SentenceTransformer('all-MiniLM-L6-v2')
     if _index is None:
@@ -46,7 +55,10 @@ def retrieve(query: str, top_k: int = 5) -> List[Dict]:
         List of dicts: [{"text": str, "score": float}, ...]
     """
     _load_resources()
-    
+
+    if faiss is None or SentenceTransformer is None:
+        return []
+
     if _index is None or _texts is None:
         return []
 

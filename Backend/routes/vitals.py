@@ -23,12 +23,7 @@ class VitalOut(VitalCreate):
     id: int
     recorded_at: datetime
 
-<<<<<<< HEAD
-    class Config:
-        orm_mode = True
-=======
     model_config = {"from_attributes": True}
->>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
 
 
 from ai.risk_scorer import predict, explain

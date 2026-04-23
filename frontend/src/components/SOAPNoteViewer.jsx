@@ -1,12 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-<<<<<<< HEAD
-import { Mic, MicOff, Save, Trash2, Clock, ChevronDown, FileText, Plus, Edit3, X } from 'lucide-react';
-import { getSoapNotes, createSoapNote, deleteSoapNote, getPatients, processSoapRawText } from '../api/services';
-=======
 import { Mic, MicOff, Save, Trash2, Clock, ChevronDown, FileText, Plus, Edit3, X, Zap, AlertTriangle, Activity, Pill, Stethoscope, Brain, Loader2, Check } from 'lucide-react';
 import { getSoapNotes, createSoapNote, deleteSoapNote, getPatients } from '../api/services';
->>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
 import { supabase } from '../api/supabaseClient';
 import { toast } from './Toast';
 import './SOAPNoteViewer.css';
@@ -97,15 +92,6 @@ export default function SOAPNoteViewer() {
 
   const selectedPatientData = patients.find((p) => p.id === selectedPatient);
 
-<<<<<<< HEAD
-  const recognitionRef = useRef(null);
-
-  const handleMicClick = () => {
-    if (isRecording) {
-      if (recognitionRef.current) recognitionRef.current.stop();
-      setIsRecording(false);
-      return;
-=======
   // ── Speech Recognition ──────────────────────────────────
   const startRecording = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -179,70 +165,9 @@ export default function SOAPNoteViewer() {
       console.error('SOAP pipeline error:', err);
       sessionStorage.removeItem('soap_processing');
       window.dispatchEvent(new Event('soap_ai_error'));
->>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
     }
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert('Speech recognition is not supported in this browser. Please use Chrome/Edge.');
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    let finalFinalTranscript = '';
-
-    recognition.onstart = () => setIsRecording(true);
-
-    recognition.onresult = (event) => {
-      let interimTranscript = '';
-      let finalTranscriptChunk = '';
-
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          finalTranscriptChunk += ' ' + event.results[i][0].transcript;
-        } else {
-          interimTranscript += event.results[i][0].transcript;
-        }
-      }
-      if (finalTranscriptChunk) {
-         finalFinalTranscript += finalTranscriptChunk;
-      }
-      setTranscript({ text: (finalFinalTranscript + ' ' + interimTranscript).trim() });
-    };
-
-    recognition.onerror = () => setIsRecording(false);
-    recognition.onend = () => setIsRecording(false);
-
-    recognitionRef.current = recognition;
-    setTranscript({ text: 'Listening...' });
-    recognition.start();
   };
 
-<<<<<<< HEAD
-  // Save voice-transcribed note to Supabase after processing with AI Models
-  const handleSave = async () => {
-    if (!transcript?.text || transcript.text === 'Listening...') return;
-    setSaving(true);
-    try {
-      const patientId = selectedPatient !== 'all' ? selectedPatient : patients[0]?.id;
-      const patient = patients.find((p) => p.id === patientId);
-
-      // Run generated text through AI Pipeline (NER + Urgency Classifier)
-      const processed = await processSoapRawText(transcript.text);
-
-      // Save structured note to Supabase DB
-      const saved = await createSoapNote({
-        patient_id: patientId,
-        subjective: processed.subjective || transcript.text,
-        objective: processed.objective || '',
-        assessment: processed.assessment || '',
-        plan: processed.plan || '',
-        entities: processed.entities || {},
-=======
   const stopRecording = async () => {
     if (recognitionRef.current) {
       recognitionRef.current.onend = null;
@@ -287,7 +212,6 @@ export default function SOAPNoteViewer() {
         entities: aiResult.entities || [],
         urgency_level: aiResult.urgency_level,
         urgency_confidence: aiResult.urgency_confidence,
->>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
       });
       setNotes((prev) => [{ ...saved, patientName: patient?.name || '' }, ...prev]);
       setAiResult(null);
@@ -295,14 +219,9 @@ export default function SOAPNoteViewer() {
       finalTranscriptRef.current = '';
       toast.success('SOAP note saved successfully!');
     } catch (err) {
-<<<<<<< HEAD
-      console.error('Failed to process/save note:', err);
-      alert('Could not process/save note.');
-=======
       console.error('Failed to save note:', err);
       const msg = err?.message || String(err);
       toast.error(`Could not save SOAP note: ${msg}`);
->>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
     } finally {
       setSaving(false);
     }
