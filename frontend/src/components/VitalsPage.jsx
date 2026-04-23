@@ -4,6 +4,7 @@ import { Heart, Wind, Thermometer, Activity, Plus, Save, ChevronDown } from 'luc
 import { getPatients, updatePatientVitals } from '../api/services';
 import { useSimulatedVitals } from '../hooks/useSimulatedVitals';
 import VitalMiniCard from './ui/VitalMiniCard';
+import { toast } from './Toast';
 import './VitalsPage.css';
 
 export default function VitalsPage() {
@@ -53,9 +54,10 @@ export default function VitalsPage() {
       setShowForm(false);
       setVitalForm({ hr: '', spo2: '', bpSys: '', bpDia: '', temp: '', rr: '' });
       setTimeout(() => setSaveMsg(''), 3000);
+      toast.success('Vitals saved successfully!');
     } catch (err) {
       console.error('Failed to save vitals:', err);
-      alert('Could not save vitals. Check Supabase RLS policies.');
+      toast.error('Could not save vitals. Check Supabase RLS policies.');
     } finally {
       setSaving(false);
     }

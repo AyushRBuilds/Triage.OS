@@ -1,4 +1,4 @@
-import { Heart, Wind, Activity, ArrowRight } from 'lucide-react';
+import { Heart, Wind, Activity, ArrowRight, Info } from 'lucide-react';
 import { getRiskColor, getRiskBadgeClass, getVitalStatus } from '../data/mockData';
 import { useAnimatedValue } from '../hooks/useSimulatedVitals';
 import './PatientCard.css';
@@ -46,6 +46,11 @@ export default function PatientCard({ patient, onClick }) {
           <span className={`badge ${riskClass}`}>{patient.risk}</span>
           {patient.medications?.some((m) => m.urgency === 'STAT') && (
             <span className="badge badge-stat">STAT</span>
+          )}
+          {patient.assignedNurses?.some((n) => n.isTemporary) && (
+            <span className="badge badge-available" title="Assigned temporarily via Shift Swap">
+              <Info size={12} style={{marginRight: 4}} /> Swapped
+            </span>
           )}
         </div>
       </div>

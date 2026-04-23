@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, LogOut, ChevronDown, User, X, AlertTriangle, Clock, CheckCircle, PenLine } from 'lucide-react';
+import { Search, Bell, ChevronDown, User, X, AlertTriangle, Clock, CheckCircle, PenLine, LogOut } from 'lucide-react';
 import FloatingNotes from './FloatingNotes';
 import { useAuth } from '../../contexts/AuthContext';
+import { subscribeToShiftSwaps, confirmShiftSwapTransfer } from '../../api/services';
+import { toast } from '../Toast';
 import { patients } from '../../data/mockData';
 import './TopBar.css';
 
@@ -20,6 +22,7 @@ export default function TopBar() {
   const [showProfile, setShowProfile] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
+  const [transferConfirm, setTransferConfirm] = useState(null);
   const notesRef = useRef(null);
   const [dismissedNotifs, setDismissedNotifs] = useState([]);
   const searchRef = useRef(null);
@@ -40,6 +43,41 @@ export default function TopBar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Listen for shift swap acceptances
+  useEffect(() => {
+    if (!user || !user.id) return;
+    
+    const sub = subscribeToShiftSwaps((payload) => {
+      if (payload.eventType === 'UPDATE' && payload.new.status.startsWith('accepted')) {
+        const parts = payload.new.status.split('|');
+        const responderName = parts[1] || 'A colleague';
+        const responderId = parts[2];
+        if (payload.new.requestor_id === user.id) {
+          // Instead of instantly transferring, ask for confirmation
+          setTransferConfirm({
+            requestId: payload.new.id,
+            responderName,
+            responderId
+          });
+          toast.success(`${responderName} accepted your shift request! Confirm to transfer patients.`, { duration: 6000 });
+        }
+      }
+    });
+
+    return () => sub.close();
+  }, [user]);
+
+  const handleConfirmTransfer = async () => {
+    if (!transferConfirm) return;
+    try {
+      await confirmShiftSwapTransfer(transferConfirm.requestId, transferConfirm.responderId);
+      toast.success(`Patients successfully transferred to ${transferConfirm.responderName}!`);
+      setTransferConfirm(null);
+    } catch (err) {
+      toast.error('Failed to transfer patients.');
+    }
+  };
+
   // Search results
   const searchResults = searchQuery.trim().length > 0
     ? patients.filter((p) =>
@@ -52,12 +90,7 @@ export default function TopBar() {
   const handleSearchSelect = (patient) => {
     setSearchQuery('');
     setShowResults(false);
-    navigate(`/vitals?patient=${patient.id}`);
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+    navigate(`/patients?patient=${patient.id}`);
   };
 
   const roleName = user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : '';
@@ -72,7 +105,7 @@ export default function TopBar() {
     <header className="topbar" id="topbar">
       {/* Greeting */}
       <div className="topbar-greeting">
-        <h2>Hello, {user?.name?.split(' ')[0] || 'User'}! <span className="wave">👋</span></h2>
+        <h2>Hello, {user?.name === 'Hospital Admin' ? 'Administrator' : (user?.name?.split(' ')[0] || 'User')}! <span className="wave">👋</span></h2>
       </div>
 
       {/* Search */}
@@ -214,14 +247,32 @@ export default function TopBar() {
               <button className="topbar-profile-item" onClick={() => { navigate('/settings'); setShowProfile(false); }}>
                 <User size={14} /> Profile & Settings
               </button>
-              <div className="topbar-profile-divider" />
-              <button className="topbar-profile-item topbar-profile-logout" onClick={handleLogout}>
-                <LogOut size={14} /> Logout
+              <button className="topbar-profile-item" onClick={() => { logout(); navigate('/login'); setShowProfile(false); }}>
+                <LogOut size={14} /> Sign Out
               </button>
             </div>
           )}
         </div>
       </div>
+
+      {/* Transfer Confirmation Modal */}
+      {transferConfirm && (
+        <div className="kanban-modal-backdrop" onClick={() => setTransferConfirm(null)}>
+          <div className="kanban-modal card animate-slide-up" onClick={(e) => e.stopPropagation()} style={{maxWidth: 400}}>
+            <h4 className="text-card-title" style={{ textAlign: 'center' }}>Confirm Patient Transfer</h4>
+            <p className="text-body" style={{ textAlign: 'center', marginBottom: 20 }}>
+              <strong>{transferConfirm.responderName}</strong> has accepted your shift request.<br/>
+              Do you want to confirm and transfer your assigned patients to them now?
+            </p>
+            <div className="kanban-form-actions" style={{ justifyContent: 'center' }}>
+              <button className="btn btn-ghost" onClick={() => setTransferConfirm(null)}>Not Now</button>
+              <button className="btn btn-primary" onClick={handleConfirmTransfer}>
+                <CheckCircle size={14} /> Confirm Transfer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

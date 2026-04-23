@@ -4,13 +4,14 @@ import {
   Bold, Italic, List, Mic, MicOff, ChevronDown, Check, AlertCircle,
   Clock, User, RotateCcw, Filter
 } from 'lucide-react';
+import { toast } from '../Toast';
 import { patients as mockPatients } from '../../data/mockData';
 import './FloatingNotes.css';
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const CATEGORIES = ['All', 'Medication', 'Urgent', 'Observation', 'Vitals', 'General'];
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
-const NOTE_COLORS = ['#ffffff', '#f0fdf4', '#fefce8', '#fff7ed', '#fdf2f8', '#eff6ff'];
+const NOTE_COLORS = ['#ffffff', '#dcfce7', '#fef9c3', '#ffedd5', '#fce7f3', '#dbeafe'];
 
 const PRIORITY_META = {
   Low:      { color: '#6b7280', bg: '#f3f4f6' },
@@ -110,7 +111,7 @@ function NoteEditor({ initial, onSave, onCancel, linkedPatientName }) {
   // Voice-to-text
   const toggleVoice = () => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) return alert('Speech recognition not supported. Use Chrome.');
+    if (!SR) return toast.error('Speech recognition not supported. Use Chrome.');
     if (isListening) { recognitionRef.current?.stop(); return; }
     const r = new SR();
     r.lang = 'en-US'; r.interimResults = false;
@@ -305,7 +306,7 @@ export default function FloatingNotes({ linkedPatientName = null, isInline = fal
         <div className="fn-header">
           <div className="fn-header-left">
             <PenLine size={16}/>
-            <span>Nurse Notes</span>
+            <span>Notes</span>
             <span className="fn-count">{visible.length}</span>
           </div>
           <div className="fn-header-actions">
@@ -379,7 +380,7 @@ export default function FloatingNotes({ linkedPatientName = null, isInline = fal
           <div className="fn-header">
             <div className="fn-header-left">
               <PenLine size={16}/>
-              <span>Nurse Notes</span>
+              <span>Notes</span>
               <span className="fn-count">{visible.length}</span>
             </div>
             <div className="fn-header-actions">

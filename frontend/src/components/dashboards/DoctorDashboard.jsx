@@ -67,7 +67,7 @@ export default function DoctorDashboard() {
           </div>
           <div className="rd-notif-list">
             {criticalPatients.map((p) => (
-              <div key={p.id} className="rd-notif rd-notif-critical" style={{ cursor: 'pointer' }} onClick={() => navigate(`/vitals?patient=${p.id}`)}>
+              <div key={p.id} className="rd-notif rd-notif-critical" style={{ cursor: 'pointer' }} onClick={() => navigate(`/patients?patient=${p.id}`)}>
                 <div className="rd-notif-icon">
                   <Activity size={14} />
                 </div>

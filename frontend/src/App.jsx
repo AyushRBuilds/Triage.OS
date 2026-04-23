@@ -3,13 +3,12 @@ import { useAuth } from './contexts/AuthContext';
 import Sidebar from './components/layout/Sidebar';
 import TopBar from './components/layout/TopBar';
 import VoiceAssistant from './components/layout/FloatingChat';
-import LoginPage from './components/auth/LoginPage';
-import SignUpPage from './components/auth/SignUpPage';
 import LandingPage from './components/LandingPage';
+import LoginPage from './components/LoginPage';
 import NurseDashboard from './components/dashboards/NurseDashboard';
 import DoctorDashboard from './components/dashboards/DoctorDashboard';
 import AdminDashboardPage from './components/dashboards/AdminDashboardPage';
-import VitalsPage from './components/VitalsPage';
+
 import SOAPNoteViewer from './components/SOAPNoteViewer';
 import KanbanBoard from './components/KanbanBoard';
 import ShiftSwapPanel from './components/ShiftSwapPanel';
@@ -18,12 +17,7 @@ import SettingsPage from './components/SettingsPage';
 import NurseChat from './components/NurseChat';
 import PatientDashboard from './components/PatientDashboard';
 import WardOverview from './components/WardOverview';
-
-function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useAuth();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  return children;
-}
+import { ToastContainer } from './components/Toast';
 
 function AppShell({ children }) {
   return (
@@ -34,6 +28,7 @@ function AppShell({ children }) {
         <div className="app-content">
           {children}
         </div>
+        <ToastContainer />
       </div>
       <VoiceAssistant />
     </div>
@@ -42,62 +37,63 @@ function AppShell({ children }) {
 
 export default function App() {
   const location = useLocation();
-  const { isAuthenticated, user } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
 
-  // Landing and login pages don't use shell
+  // Show nothing or a global loader while restoring session from localStorage
+  if (loading) return null;
+
+  // Landing page doesn't use shell and is public
   if (location.pathname === '/') {
-    return <LandingPage />;
+    return !isAuthenticated ? <LandingPage /> : <Navigate to={
+      user?.role === 'doctor' ? '/doctor/dashboard' :
+      user?.role === 'admin' ? '/admin/dashboard' :
+      '/nurse/dashboard'
+    } replace />;
   }
+
+  // Login page is public
   if (location.pathname === '/login') {
-    if (isAuthenticated) {
-      const dashboardMap = { nurse: '/nurse/dashboard', doctor: '/doctor/dashboard', admin: '/admin/dashboard' };
-      return <Navigate to={dashboardMap[user?.role] || '/nurse/dashboard'} replace />;
-    }
-    return <LoginPage />;
+    return !isAuthenticated ? <LoginPage /> : <Navigate to="/" replace />;
   }
-  if (location.pathname === '/signup') {
-    if (isAuthenticated) {
-      const dashboardMap = { nurse: '/nurse/dashboard', doctor: '/doctor/dashboard', admin: '/admin/dashboard' };
-      return <Navigate to={dashboardMap[user?.role] || '/nurse/dashboard'} replace />;
-    }
-    return <SignUpPage />;
+
+  // All other routes are protected
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
   }
 
   return (
-    <ProtectedRoute>
-      <AppShell>
-        <Routes>
-          {/* Role dashboards */}
-          <Route path="/nurse/dashboard" element={<NurseDashboard />} />
-          <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
-          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+    <AppShell>
+      <Routes>
+        {/* Role dashboards */}
+        <Route path="/nurse/dashboard" element={<NurseDashboard />} />
+        <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
+        <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
 
-          {/* Feature pages */}
-          <Route path="/vitals" element={<VitalsPage />} />
-          <Route path="/soap-notes" element={<SOAPNoteViewer />} />
-          <Route path="/tasks" element={<KanbanBoard />} />
-          <Route path="/chat" element={<NurseChat />} />
-          <Route path="/shift-swap" element={<ShiftSwapPanel />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/patient-dashboard" element={<PatientDashboard />} />
-          <Route path="/ward-overview" element={<WardOverview />} />
+        {/* Feature pages */}
 
-          {/* Admin specific */}
-          <Route path="/admin/patients" element={<AdminDashboard />} />
-          <Route path="/admin/staff" element={<AdminDashboard />} />
-          <Route path="/admin/reports" element={<AdminDashboardPage />} />
-          <Route path="/patients" element={<PatientDashboard />} />
+        <Route path="/soap-notes" element={<SOAPNoteViewer />} />
+        <Route path="/tasks" element={<KanbanBoard />} />
+        <Route path="/chat" element={<NurseChat />} />
+        <Route path="/shift-swap" element={<ShiftSwapPanel />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/patient-dashboard" element={<PatientDashboard />} />
+        <Route path="/ward-overview" element={<WardOverview />} />
 
-          {/* Fallback */}
-          <Route path="*" element={
-            <Navigate to={
-              user?.role === 'doctor' ? '/doctor/dashboard' :
-              user?.role === 'admin' ? '/admin/dashboard' :
-              '/nurse/dashboard'
-            } replace />
-          } />
-        </Routes>
-      </AppShell>
-    </ProtectedRoute>
+        {/* Admin specific */}
+        <Route path="/admin/patients" element={<AdminDashboard />} />
+        <Route path="/admin/staff" element={<AdminDashboard />} />
+        <Route path="/admin/reports" element={<AdminDashboardPage />} />
+        <Route path="/patients" element={<PatientDashboard />} />
+
+        {/* Fallback — go to role dashboard */}
+        <Route path="*" element={
+          <Navigate to={
+            user?.role === 'doctor' ? '/doctor/dashboard' :
+            user?.role === 'admin' ? '/admin/dashboard' :
+            '/nurse/dashboard'
+          } replace />
+        } />
+      </Routes>
+    </AppShell>
   );
 }

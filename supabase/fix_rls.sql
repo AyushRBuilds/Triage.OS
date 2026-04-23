@@ -1,0 +1,10 @@
+alter table public.nurses disable row level security;
+alter table public.patients disable row level security;
+alter table public.patient_assignments disable row level security;
+alter table public.vitals disable row level security;
+alter table public.medications disable row level security;
+alter table public.tasks disable row level security;
+alter table public.soap_notes disable row level security;
+alter table public.chat_messages disable row level security;
+alter table public.user_preferences disable row level security;
+alter table public.shift_swap_requests disable row level security;

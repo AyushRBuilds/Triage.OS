@@ -340,15 +340,15 @@
 }
 .fn-editor-colors { display: flex; gap: 5px; flex-shrink: 0; }
 .fn-color-swatch {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  border: 2px solid transparent;
+  border: 1px solid rgba(0,0,0,0.15);
   cursor: pointer;
   transition: transform 0.1s;
 }
-.fn-color-swatch:hover { transform: scale(1.2); }
-.fn-color-swatch.selected { border-color: var(--green-primary); transform: scale(1.2); }
+.fn-color-swatch:hover { transform: scale(1.1); }
+.fn-color-swatch.selected { border: 2px solid var(--green-primary); transform: scale(1.2); }
 
 .fn-editor-meta {
   display: flex;
@@ -404,6 +404,23 @@
   content: attr(data-placeholder);
   color: var(--text-muted);
   pointer-events: none;
+}
+
+/* Ensure lists are visible and styled properly */
+.fn-body-editor ul, .fn-note-body ul {
+  list-style-type: disc;
+  padding-left: 20px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+.fn-body-editor ol, .fn-note-body ol {
+  list-style-type: decimal;
+  padding-left: 20px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+.fn-body-editor li, .fn-note-body li {
+  margin-bottom: 2px;
 }
 
 .fn-tags-input {

@@ -1,109 +1,50 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged 
-} from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase';
+import { supabase } from '../api/supabaseClient';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('triage_user');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        // Fetch user role and other data from Firestore
-        const docRef = doc(db, "users", firebaseUser.uid);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          const userData = {
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            ...docSnap.data()
-          };
-          setUser(userData);
-          localStorage.setItem('triage_user', JSON.stringify(userData));
-        } else {
-          // If Firestore data doesn't exist, just use basic info
-          const userData = {
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            role: 'nurse' // Default role if not found
-          };
-          setUser(userData);
-        }
-      } else {
-        setUser(null);
-        localStorage.removeItem('triage_user');
-      }
-      setLoading(false);
-    });
-
-    return unsubscribe;
+    setLoading(false);
   }, []);
 
-  const login = async (email, password) => {
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      // Data will be fetched in onAuthStateChanged
-      return { success: true, user: userCredential.user };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
+  const login = (userData) => {
+    // Save to localStorage so it persists across reloads
+    localStorage.setItem('triage_user', JSON.stringify(userData));
+    setUser(userData);
   };
 
-  const signup = async (email, password, role, name) => {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const firebaseUser = userCredential.user;
-      
-      // Store additional data in Firestore
-      const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
-      const userData = {
-        name,
-        role,
-        initials,
-        email,
-        ward: role === 'admin' ? 'Hospital Admin' : 'ICU Ward 3'
-      };
-      
-      await setDoc(doc(db, "users", firebaseUser.uid), userData);
-      
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
+  const logout = () => {
+    localStorage.removeItem('triage_user');
+    setUser(null);
   };
 
-  const logout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error("Logout error", error);
-    }
+  const updateUser = (updatedData) => {
+    setUser((prev) => {
+      const nu = { ...prev, ...updatedData };
+      localStorage.setItem('triage_user', JSON.stringify(nu));
+      return nu;
+    });
   };
 
-  const isAuthenticated = !!user;
-
-  const updateUser = async (updatedData) => {
-    if (!user) return;
-    try {
-      await setDoc(doc(db, "users", user.uid), updatedData, { merge: true });
-      setUser({ ...user, ...updatedData });
-    } catch (error) {
-      console.error("Update user error", error);
-    }
+  const switchRole = (role) => {
+    const roleDefaults = {
+      nurse: { name: 'Ward Nurse', initials: 'WN', ward: 'ICU Ward 3' },
+      doctor: { name: 'Dr. Sharma', initials: 'DS', ward: 'ICU Ward 3' },
+      admin: { name: 'Admin User', initials: 'AU', ward: 'Hospital Admin' },
+    };
+    updateUser({ role, ...(roleDefaults[role] || {}) });
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isAuthenticated, updateUser, loading }}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, login, logout, updateUser, switchRole, isAuthenticated: !!user, loading }}>
+      {children}
     </AuthContext.Provider>
   );
 }

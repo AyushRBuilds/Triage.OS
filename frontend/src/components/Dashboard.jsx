@@ -17,7 +17,7 @@ export default function Dashboard() {
   const [schedule, setSchedule] = useState({ days: [] });
   const [activeTasks, setActiveTasks] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
-  const [activeTab, setActiveTab] = useState('patients');
+
 
   // Live vitals
   const { patients, isConnected } = useSimulatedVitals(rawPatients);
@@ -51,78 +51,66 @@ export default function Dashboard() {
       base + Math.round((Math.random() - 0.5) * variance * 2)
     );
 
-  const tabs = [
-    { key: 'patients', label: 'Patients' },
-    { key: 'soap', label: 'SOAP Notes' },
-    { key: 'tasks', label: 'Tasks' },
-    { key: 'ai', label: 'AI Chat' },
-  ];
 
   return (
     <div className="dashboard" id="dashboard-page">
-      <div className="dashboard-left">
-        {/* Tab navigation */}
-        <div className="tab-group">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              className={`tab-pill ${activeTab === tab.key ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      <div className="dashboard-left animate-fade-in" style={{ animationDelay: '0.05s' }}>
+        
 
         {/* Stats row */}
-        <div className="dashboard-stats">
-          <StatCard label="Total" value={stats.totalPatients} subtext="patients" icon={Users} />
-          <StatCard label="P1 Critical" value={stats.p1Count} subtext="need urgent attention" color="var(--risk-p1)" icon={AlertTriangle} />
-          <StatCard label="STAT Meds" value={stats.statMeds} subtext="pending" color="var(--risk-p2)" icon={Pill} />
-          <StatCard label="On Shift" value={stats.onShift} subtext="nurses" icon={UserCheck} />
+        <div className="dashboard-stats animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          <StatCard label="Total" value={stats.totalPatients} subtext="patients" />
+          <StatCard label="P1 Critical" value={stats.p1Count} subtext="need urgent attention" color="var(--risk-p1)" warning />
+          <StatCard label="STAT Meds" value={stats.statMeds} subtext="pending" color="var(--risk-p2)" link />
+          <StatCard label="On Shift" value={stats.onShift} subtext="nurses" />
         </div>
 
-        {/* Patient overview header */}
-        <div className="dashboard-section-header">
-          <h3 className="text-card-title">Patient Overview</h3>
-          {isConnected && (
-            <span className="live-badge">
-              <span className="pulse-dot" /> Live
-            </span>
-          )}
-          <button className="more-btn"><MoreHorizontal size={18} /></button>
-        </div>
+        <div className="dashboard-list-container animate-fade-in" style={{ animationDelay: '0.15s' }}>
+          {/* Patient overview header */}
+          <div className="dashboard-section-header">
+            <h3 className="text-card-title">Patient Overview</h3>
+            {isConnected && (
+              <span className="live-badge">
+                <span className="pulse-dot" /> Live
+              </span>
+            )}
+            <button className="more-btn"><MoreHorizontal size={18} /></button>
+          </div>
 
-        {/* Patient list */}
-        <div className="dashboard-patient-list">
-          {patients
-            .sort((a, b) => {
-              const order = { P1: 0, P2: 1, P3: 2, P4: 3, P5: 4 };
-              return (order[a.risk] || 5) - (order[b.risk] || 5);
-            })
-            .map((patient) => (
-              <PatientCard
-                key={patient.id}
-                patient={patient}
-                onClick={setSelectedPatient}
-              />
-            ))}
+          {/* Patient list */}
+          <div className="dashboard-patient-list">
+            {patients
+              .sort((a, b) => {
+                const order = { P1: 0, P2: 1, P3: 2, P4: 3, P5: 4 };
+                return (order[a.risk] || 5) - (order[b.risk] || 5);
+              })
+              .map((patient) => (
+                <PatientCard
+                  key={patient.id}
+                  patient={patient}
+                  onClick={setSelectedPatient}
+                  isActive={selectedPatient?.id === patient.id}
+                />
+              ))}
+          </div>
         </div>
       </div>
 
       <div className="dashboard-right">
         {/* Schedule card */}
-        <ScheduleCard schedule={schedule} />
+        <div className="dashboard-grid-full animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          <ScheduleCard schedule={schedule} />
+        </div>
 
         {/* Active tasks */}
-        <div className="dashboard-tasks-row">
+        <div className="dashboard-grid-full dashboard-tasks-row animate-fade-in" style={{ animationDelay: '0.15s' }}>
           <div className="dashboard-section-header">
             <h3 className="text-card-title">Active Tasks</h3>
             <span className="badge badge-p4">{activeTasks.length}</span>
           </div>
           <div className="dashboard-tasks-scroll">
             {activeTasks.slice(0, 4).map((task) => (
-              <div key={task.id} className={`task-mini-card ${task.priority === 'STAT' ? 'card-dark' : 'card'}`}>
+              <div key={task.id} className="task-mini-card card">
                 <div className="task-mini-top">
                   <span className={`badge ${task.priority === 'STAT' ? 'badge-stat' : task.priority === 'Urgent' ? 'badge-urgent' : 'badge-routine'}`}>
                     {task.priority}
@@ -140,7 +128,7 @@ export default function Dashboard() {
 
         {/* Vitals mini cards for selected patient */}
         {currentPatient && (
-          <>
+          <div className="dashboard-grid-full animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <div className="dashboard-section-header">
               <h3 className="text-card-title">{currentPatient.name} — Vitals</h3>
             </div>
@@ -167,14 +155,47 @@ export default function Dashboard() {
                 sparklineData={generateSparkline(currentPatient.vitals.bpSys, 10)}
               />
             </div>
-          </>
+            
+            {/* Clinical Insights added below vitals */}
+            <div className="dashboard-patient-context animate-fade-in" style={{ marginTop: 24, padding: '20px 24px', background: 'var(--bg-card)', borderRadius: 'var(--radius-card)', border: '1px solid var(--border-default)', boxShadow: 'var(--shadow-card)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <h4 className="text-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <AlertTriangle size={14} style={{ color: 'var(--risk-p2)' }} /> Clinical Context & Insights
+                </h4>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                <div style={{ background: 'var(--bg-main)', padding: 16, borderRadius: 12 }}>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Primary Diagnosis</span>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{currentPatient.diagnosis || 'Pending Review'}</p>
+                </div>
+                <div style={{ background: 'var(--bg-main)', padding: 16, borderRadius: 12 }}>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Patient Profile</span>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {currentPatient.age ? `${currentPatient.age} years old` : 'Unknown age'} • {currentPatient.weight ? `${currentPatient.weight} kg` : 'Unknown weight'}
+                  </p>
+                </div>
+              </div>
+              {currentPatient.risk === 'P1' && (
+                <div style={{ marginTop: 16, padding: '12px 16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#DC2626', animation: 'pulse 2s infinite' }} />
+                  <span style={{ fontSize: 13, color: '#DC2626', fontWeight: 500 }}>Critical Status: Requires continuous monitoring. STAT meds pending administration.</span>
+                </div>
+              )}
+            </div>
+          </div>
         )}
 
-        {/* Triage chart */}
-        <TriageChart data={triageScores} />
+        <div className="dashboard-bottom-row animate-fade-in" style={{ animationDelay: '0.25s' }}>
+          {/* Triage chart */}
+          <div className="dashboard-triage-wrap">
+            <TriageChart data={triageScores} />
+          </div>
 
-        {/* CTA card */}
-        <CTACard />
+          {/* CTA card */}
+          <div className="dashboard-cta-wrap">
+            <CTACard />
+          </div>
+        </div>
       </div>
     </div>
   );
