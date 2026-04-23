@@ -24,7 +24,7 @@ export default function PatientDashboard() {
       const notes = await getSoapNotesByPatient(patient.id);
       const reportContent = `
 ============================================================
-           TRIAGE.OS — COMPREHENSIVE PATIENT REPORT
+           T.OS — COMPREHENSIVE PATIENT REPORT
 ============================================================
 GENERATED AT: ${new Date().toLocaleString()}
 
