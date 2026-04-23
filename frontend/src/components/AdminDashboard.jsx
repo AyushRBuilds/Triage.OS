@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, ChevronDown, RefreshCw, Trash2, AlertTriangle, Users, X, Check } from 'lucide-react';
-import { getPatients, getNurses, deletePatient, addPatient, allocateNurseToPatient, unallocateNurseFromPatient } from '../api/services';
+import { Plus, Search, ChevronDown, RefreshCw, Trash2, AlertTriangle, Users, X, Check, UserPlus, Mail, Lock, Shield, CheckSquare } from 'lucide-react';
+import { getPatients, getNurses, deletePatient, addPatient, addNurse, deleteNurse, allocateNurseToPatient, unallocateNurseFromPatient, getTasks } from '../api/services';
 import { getRiskBadgeClass } from '../data/mockData';
 import { toast } from './Toast';
 import { useAuth } from '../contexts/AuthContext';
+import KanbanBoard from './KanbanBoard';
 import './AdminDashboard.css';
 
 export default function AdminDashboard() {
@@ -15,13 +16,22 @@ export default function AdminDashboard() {
   const [riskFilter, setRiskFilter] = useState('all');
   const [wardFilter, setWardFilter] = useState('all');
   
+  const [activeTab, setActiveTab] = useState('patients');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [showAddPatient, setShowAddPatient] = useState(false);
   const [manageNursesPatient, setManageNursesPatient] = useState(null);
+  const [showAddStaff, setShowAddStaff] = useState(false);
+  const [deleteStaffConfirm, setDeleteStaffConfirm] = useState(null);
+  const [staffSearch, setStaffSearch] = useState('');
   
   // Add Patient Form State
   const [newPatient, setNewPatient] = useState({
     name: '', age: '', gender: 'M', bed: '', ward: 'General Ward 1', risk: 'P5', diagnosis: ''
+  });
+
+  // Add Staff Form State
+  const [newStaff, setNewStaff] = useState({
+    name: '', email: '', password: '', role: 'RN', ward: 'General Ward 1', shift_type: 'Day', max_capacity: '8'
   });
 
   const load = async () => {
@@ -97,7 +107,6 @@ export default function AdminDashboard() {
         await allocateNurseToPatient(manageNursesPatient.id, nurseId, false);
         toast.success('Nurse allocated');
       }
-      // Optimistically update
       setManageNursesPatient(prev => {
         if (!prev) return prev;
         const newAssigned = isAssigned 
@@ -105,126 +114,255 @@ export default function AdminDashboard() {
           : [...prev.assignedNurses, nurses.find(n => n.id === nurseId)];
         return { ...prev, assignedNurses: newAssigned };
       });
-      load(); // refresh background list
+      load();
     } catch (err) {
       console.error('Failed to toggle nurse assignment', err);
       toast.error('Failed to update assignment');
     }
   };
 
+  const handleAddStaff = async (e) => {
+    e.preventDefault();
+    try {
+      await addNurse(newStaff);
+      toast.success('Staff member added successfully');
+      setShowAddStaff(false);
+      setNewStaff({ name: '', email: '', password: '', role: 'RN', ward: 'General Ward 1', shift_type: 'Day', max_capacity: '8' });
+      load();
+    } catch (err) {
+      console.error('Failed to add staff', err);
+      toast.error('Failed to add staff member.');
+    }
+  };
+
+  const handleDeleteStaff = async (nurseId) => {
+    try {
+      await deleteNurse(nurseId);
+      setNurses(prev => prev.filter(n => n.id !== nurseId));
+      setDeleteStaffConfirm(null);
+      toast.success('Staff member removed.');
+    } catch (err) {
+      console.error('Failed to delete staff:', err);
+      toast.error('Could not remove staff member.');
+    }
+  };
+
+  const filteredStaff = nurses.filter(n =>
+    n.name?.toLowerCase().includes(staffSearch.toLowerCase()) ||
+    n.email?.toLowerCase().includes(staffSearch.toLowerCase())
+  );
+
   return (
     <div className="admin-page" id="admin-dashboard-page">
       <div className="admin-header">
         <h3 className="text-section-title">Admin Dashboard</h3>
-        <button className="btn btn-primary btn-sm" onClick={() => setShowAddPatient(true)}>
-          <Plus size={14} /> Add Patient
+        <div style={{display:'flex',gap:8}}>
+          {activeTab === 'patients' && (
+            <button className="btn btn-primary btn-sm" onClick={() => setShowAddPatient(true)}>
+              <Plus size={14} /> Add Patient
+            </button>
+          )}
+          {activeTab === 'staff' && (
+            <button className="btn btn-primary btn-sm" onClick={() => setShowAddStaff(true)}>
+              <UserPlus size={14} /> Add Staff
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Tab Switcher */}
+      <div className="admin-tabs">
+        <button className={`admin-tab ${activeTab === 'patients' ? 'active' : ''}`} onClick={() => setActiveTab('patients')}>
+          <Users size={14} /> Patients
+        </button>
+        <button className={`admin-tab ${activeTab === 'staff' ? 'active' : ''}`} onClick={() => setActiveTab('staff')}>
+          <Shield size={14} /> Staff
+        </button>
+        <button className={`admin-tab ${activeTab === 'tasks' ? 'active' : ''}`} onClick={() => setActiveTab('tasks')}>
+          <Check size={14} /> Tasks
         </button>
       </div>
 
-      {/* Toolbar */}
-      <div className="admin-toolbar">
-        <div className="admin-search">
-          <Search size={14} className="admin-search-icon" />
-          <input
-            type="text"
-            className="input input-pill admin-search-input"
-            placeholder="Search patients..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            id="admin-search"
-          />
-        </div>
-        <div className="admin-filters">
-          <select
-            className="admin-filter-select"
-            value={wardFilter}
-            onChange={(e) => setWardFilter(e.target.value)}
-          >
-            <option value="all">All Wards</option>
-            <option value="ICU Ward 3">ICU Ward 3</option>
-            <option value="ICU Ward 2">ICU Ward 2</option>
-            <option value="General Ward 1">General Ward 1</option>
-          </select>
-          <select
-            className="admin-filter-select"
-            value={riskFilter}
-            onChange={(e) => setRiskFilter(e.target.value)}
-          >
-            <option value="all">All Risk</option>
-            <option value="P1">P1 Critical</option>
-            <option value="P2">P2 High</option>
-            <option value="P3">P3 Moderate</option>
-            <option value="P4">P4 Low</option>
-            <option value="P5">P5 Stable</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Data table */}
-      <div className="admin-table-wrapper">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Bed</th>
-              <th>Risk</th>
-              <th>Assigned Nurses</th>
-              <th style={{ textAlign: 'right' }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((patient) => {
-              const nurseCount = patient.assignedNurses?.length || 0;
-              return (
-                <tr key={patient.id} className="admin-row">
-                  <td>
-                    <div className="admin-patient-cell">
-                      <div
-                        className="admin-patient-avatar"
-                        style={{
-                          background: patient.risk === 'P1' ? 'var(--risk-p1)' : 'var(--green-primary)',
-                        }}
-                      >
-                        {patient.initials}
-                      </div>
-                      <div>
-                        <span className="admin-patient-name">{patient.name}</span>
-                        <span className="admin-patient-sub text-timestamp">{patient.diagnosis?.split(',')[0] || 'No Diagnosis'}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <span className="text-mono">{patient.bed}</span>
-                  </td>
-                  <td>
-                    <span className={`badge ${getRiskBadgeClass(patient.risk)}`}>
-                      {patient.risk}
-                    </span>
-                  </td>
-                  <td>
-                    <span className="admin-nurse-name">{nurseCount > 0 ? `${nurseCount} Nurse(s)` : 'Unassigned'}</span>
-                  </td>
-                  <td>
-                    <div className="admin-action-group">
-                      <button className="btn btn-ghost btn-sm" onClick={() => setManageNursesPatient(patient)}>
-                        <Users size={14} /> Manage Nurses
-                      </button>
-                      <button className="admin-delete-btn" onClick={() => setDeleteConfirm(patient.id)}>
-                        <Trash2 size={12} /> Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {filtered.length === 0 && (
-          <div className="admin-empty">
-            <p className="text-body">No patients match your filters</p>
+      {activeTab === 'patients' && (
+        <>
+          {/* Toolbar */}
+          <div className="admin-toolbar">
+            <div className="admin-search">
+              <Search size={14} className="admin-search-icon" />
+              <input
+                type="text"
+                className="input input-pill admin-search-input"
+                placeholder="Search patients..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                id="admin-search"
+              />
+            </div>
+            <div className="admin-filters">
+              <select
+                className="admin-filter-select"
+                value={wardFilter}
+                onChange={(e) => setWardFilter(e.target.value)}
+              >
+                <option value="all">All Wards</option>
+                <option value="ICU Ward 3">ICU Ward 3</option>
+                <option value="ICU Ward 2">ICU Ward 2</option>
+                <option value="General Ward 1">General Ward 1</option>
+              </select>
+              <select
+                className="admin-filter-select"
+                value={riskFilter}
+                onChange={(e) => setRiskFilter(e.target.value)}
+              >
+                <option value="all">All Risk</option>
+                <option value="P1">P1 Critical</option>
+                <option value="P2">P2 High</option>
+                <option value="P3">P3 Moderate</option>
+                <option value="P4">P4 Low</option>
+                <option value="P5">P5 Stable</option>
+              </select>
+            </div>
           </div>
-        )}
-      </div>
+
+          {/* Data table */}
+          <div className="admin-table-wrapper">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Bed</th>
+                  <th>Risk</th>
+                  <th>Assigned Nurses</th>
+                  <th style={{ textAlign: 'right' }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((patient) => {
+                  const nurseCount = patient.assignedNurses?.length || 0;
+                  return (
+                    <tr key={patient.id} className="admin-row">
+                      <td>
+                        <div className="admin-patient-cell">
+                          <div
+                            className="admin-patient-avatar"
+                            style={{
+                              background: patient.risk === 'P1' ? 'var(--risk-p1)' : 'var(--green-primary)',
+                            }}
+                          >
+                            {patient.initials}
+                          </div>
+                          <div>
+                            <span className="admin-patient-name">{patient.name}</span>
+                            <span className="admin-patient-sub text-timestamp">{patient.diagnosis?.split(',')[0] || 'No Diagnosis'}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span className="text-mono">{patient.bed}</span>
+                      </td>
+                      <td>
+                        <span className={`badge ${getRiskBadgeClass(patient.risk)}`}>
+                          {patient.risk}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="admin-nurse-name">{nurseCount > 0 ? `${nurseCount} Nurse(s)` : 'Unassigned'}</span>
+                      </td>
+                      <td>
+                        <div className="admin-action-group">
+                          <button className="btn btn-ghost btn-sm" onClick={() => setManageNursesPatient(patient)}>
+                            <Users size={14} /> Manage Nurses
+                          </button>
+                          <button className="admin-delete-btn" onClick={() => setDeleteConfirm(patient.id)}>
+                            <Trash2 size={12} /> Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {filtered.length === 0 && (
+              <div className="admin-empty">
+                <p className="text-body">No patients match your filters</p>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {activeTab === 'staff' && (
+        <>
+          {/* Staff Toolbar */}
+          <div className="admin-toolbar">
+            <div className="admin-search">
+              <Search size={14} className="admin-search-icon" />
+              <input
+                type="text"
+                className="input input-pill admin-search-input"
+                placeholder="Search staff by name or email..."
+                value={staffSearch}
+                onChange={(e) => setStaffSearch(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Staff table */}
+          <div className="admin-table-wrapper">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Ward</th>
+                  <th>Shift</th>
+                  <th>Patients</th>
+                  <th style={{ textAlign: 'right' }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredStaff.map((nurse) => (
+                  <tr key={nurse.id} className="admin-row">
+                    <td>
+                      <div className="admin-patient-cell">
+                        <div className="admin-patient-avatar" style={{ background: 'var(--green-primary)' }}>
+                          {nurse.initials || '??'}
+                        </div>
+                        <span className="admin-patient-name">{nurse.name}</span>
+                      </div>
+                    </td>
+                    <td><span className="text-body" style={{fontSize: 13}}>{nurse.email || '—'}</span></td>
+                    <td><span className="badge badge-p4">{nurse.role || 'RN'}</span></td>
+                    <td><span className="text-body" style={{fontSize: 13}}>{nurse.ward || '—'}</span></td>
+                    <td><span className="badge badge-available">{nurse.shift || nurse.shift_type || '—'}</span></td>
+                    <td><span className="text-mono">{nurse.patientCount ?? 0}</span></td>
+                    <td>
+                      <div className="admin-action-group">
+                        <button className="admin-delete-btn" onClick={() => setDeleteStaffConfirm(nurse.id)}>
+                          <Trash2 size={12} /> Remove
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {filteredStaff.length === 0 && (
+              <div className="admin-empty">
+                <p className="text-body">No staff members found</p>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+      
+      {activeTab === 'tasks' && (
+        <div className="admin-tasks-container" style={{ marginTop: 24 }}>
+          <KanbanBoard />
+        </div>
+      )}
 
       {/* Modals */}
       {deleteConfirm && (
@@ -356,6 +494,84 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* Delete Staff Confirm */}
+      {deleteStaffConfirm && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center'}} onClick={() => setDeleteStaffConfirm(null)}>
+          <div className="card animate-fade-in" style={{width:320,padding:24,textAlign:'center',background:'var(--bg-card)',borderRadius:16}} onClick={(e) => e.stopPropagation()}>
+            <div style={{marginBottom:16,color:'#ef4444',display:'flex',justifyContent:'center'}}><AlertTriangle size={48} /></div>
+            <h3 style={{marginBottom:8,fontSize:18,fontWeight:600}}>Remove Staff?</h3>
+            <p style={{marginBottom:24,color:'var(--text-muted)'}}>This will remove the staff member and unlink all their patient assignments.</p>
+            <div style={{display:'flex',gap:12,justifyContent:'center'}}>
+              <button className="btn btn-ghost" style={{flex:1}} onClick={() => setDeleteStaffConfirm(null)}>Cancel</button>
+              <button className="btn btn-primary" style={{flex:1,background:'#ef4444',borderColor:'#ef4444',color:'white'}} onClick={() => handleDeleteStaff(deleteStaffConfirm)}>Remove</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Staff Modal */}
+      {showAddStaff && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center'}} onClick={() => setShowAddStaff(false)}>
+          <div className="card animate-fade-in" style={{width:440,padding:24,background:'var(--bg-card)',borderRadius:16}} onClick={(e) => e.stopPropagation()}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+              <h3 style={{fontSize:18,fontWeight:600}}>Add Staff Member</h3>
+              <button className="btn btn-ghost btn-sm" style={{padding:4}} onClick={() => setShowAddStaff(false)}><X size={20}/></button>
+            </div>
+            <form onSubmit={handleAddStaff} style={{display:'flex',flexDirection:'column',gap:16}}>
+              <div>
+                <label className="text-label" style={{display:'block',marginBottom:8}}>Full Name *</label>
+                <input required className="input" value={newStaff.name} onChange={e => setNewStaff({...newStaff, name: e.target.value})} placeholder="e.g. Priya Mehta" />
+              </div>
+              <div>
+                <label className="text-label" style={{display:'block',marginBottom:8}}><Mail size={12} style={{marginRight:4,verticalAlign:'middle'}} />Email *</label>
+                <input required type="email" className="input" value={newStaff.email} onChange={e => setNewStaff({...newStaff, email: e.target.value})} placeholder="staff@hospital.org" />
+              </div>
+              <div>
+                <label className="text-label" style={{display:'block',marginBottom:8}}><Lock size={12} style={{marginRight:4,verticalAlign:'middle'}} />Password *</label>
+                <input required type="password" className="input" value={newStaff.password} onChange={e => setNewStaff({...newStaff, password: e.target.value})} placeholder="Minimum 6 characters" minLength={6} />
+              </div>
+              <div style={{display:'flex',gap:16}}>
+                <div style={{flex:1}}>
+                  <label className="text-label" style={{display:'block',marginBottom:8}}>Role</label>
+                  <select className="input" value={newStaff.role} onChange={e => setNewStaff({...newStaff, role: e.target.value})}>
+                    <option value="RN">Registered Nurse</option>
+                    <option value="LPN">Licensed Practical Nurse</option>
+                    <option value="CNA">Certified Nursing Asst.</option>
+                    <option value="Charge Nurse">Charge Nurse</option>
+                    <option value="Doctor">Doctor</option>
+                    <option value="Admin">Admin</option>
+                  </select>
+                </div>
+                <div style={{flex:1}}>
+                  <label className="text-label" style={{display:'block',marginBottom:8}}>Ward</label>
+                  <select className="input" value={newStaff.ward} onChange={e => setNewStaff({...newStaff, ward: e.target.value})}>
+                    <option value="General Ward 1">General Ward 1</option>
+                    <option value="ICU Ward 2">ICU Ward 2</option>
+                    <option value="ICU Ward 3">ICU Ward 3</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{display:'flex',gap:16}}>
+                <div style={{flex:1}}>
+                  <label className="text-label" style={{display:'block',marginBottom:8}}>Shift Type</label>
+                  <select className="input" value={newStaff.shift_type} onChange={e => setNewStaff({...newStaff, shift_type: e.target.value})}>
+                    <option value="Day">Day</option>
+                    <option value="Night">Night</option>
+                    <option value="Rotating">Rotating</option>
+                  </select>
+                </div>
+                <div style={{flex:1}}>
+                  <label className="text-label" style={{display:'block',marginBottom:8}}>Max Capacity</label>
+                  <input type="number" className="input" value={newStaff.max_capacity} onChange={e => setNewStaff({...newStaff, max_capacity: e.target.value})} min={1} max={20} />
+                </div>
+              </div>
+              <button type="submit" className="btn btn-primary" style={{marginTop:8}}>
+                <UserPlus size={14} /> Add Staff Member
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

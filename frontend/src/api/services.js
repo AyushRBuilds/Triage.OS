@@ -214,6 +214,46 @@ export async function getNurses() {
   }));
 }
 
+export async function addNurse(staff) {
+  // Build a deterministic ID from name (slug-style)
+  const id = staff.id || `nurse-${staff.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
+  const initials = staff.name
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
+  const payload = {
+    id,
+    name: staff.name,
+    email: staff.email,
+    password_hash: staff.password || null, // store as plain text for demo; hash server-side in prod
+    initials,
+    role: staff.role,
+    ward: staff.ward,
+    shift_type: staff.shift_type,
+    max_capacity: parseInt(staff.max_capacity, 10) || 8,
+  };
+
+  const { data, error } = await supabase
+    .from('nurses')
+    .insert([payload])
+    .select()
+    .single();
+
+  if (error) handleError(error, 'addNurse');
+  return data;
+}
+
+export async function deleteNurse(nurseId) {
+  const { error } = await supabase
+    .from('nurses')
+    .delete()
+    .eq('id', nurseId);
+  if (error) handleError(error, 'deleteNurse');
+}
+
 // ══════════════════════════════════════════════════════════════
 // TASKS
 // ══════════════════════════════════════════════════════════════
@@ -533,7 +573,7 @@ export async function getDashboardStats() {
 // Maps snake_case DB columns → camelCase shape the UI expects
 // ══════════════════════════════════════════════════════════════
 
-function normalizePatient(p) {
+export function normalizePatient(p) {
   if (!p) return null;
   
   // Handle new assignment logic & 24hr expiration
@@ -553,6 +593,15 @@ function normalizePatient(p) {
     initials: a.nurse?.initials,
     isTemporary: a.is_temporary
   }));
+
+  if (p.assigned_nurse && !assignedNurses.some(n => n.id === p.assigned_nurse.id)) {
+    assignedNurses.push({
+      id: p.assigned_nurse.id,
+      name: p.assigned_nurse.name,
+      initials: p.assigned_nurse.initials,
+      isTemporary: false
+    });
+  }
 
   // Fallback string for legacy UI components
   const primaryNurseName = assignedNurses.length > 0 
