@@ -49,43 +49,51 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar" id="sidebar-nav">
-      {/* Main Nav */}
-      <nav className="sidebar-nav">
-        {navItems.map((item) => (
+      <div className="sidebar-logo" onClick={() => navigate('/')} title="t.os home">
+        <span className="sidebar-logo-text">
+          t<span className="sidebar-logo-accent">.os</span>
+        </span>
+      </div>
+
+      <div className="sidebar-content">
+        {/* Main Nav */}
+        <nav className="sidebar-nav">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                `sidebar-item ${isActive ? 'active' : ''}`
+              }
+              title={item.label}
+            >
+              <span className="sidebar-indicator" />
+              <item.icon size={22} strokeWidth={1.8} />
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* Bottom Nav */}
+        <div className="sidebar-bottom">
+          <button
+            className="sidebar-item"
+            title="Sign Out"
+            onClick={() => { logout(); navigate('/login'); }}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', outline: 'none', padding: 0 }}
+          >
+            <LogOut size={22} strokeWidth={1.8} />
+          </button>
           <NavLink
-            key={item.to}
-            to={item.to}
+            to="/settings"
             className={({ isActive }) =>
               `sidebar-item ${isActive ? 'active' : ''}`
             }
-            title={item.label}
+            title="Settings"
           >
             <span className="sidebar-indicator" />
-            <item.icon size={22} strokeWidth={1.8} />
+            <Settings size={22} strokeWidth={1.8} />
           </NavLink>
-        ))}
-      </nav>
-
-      {/* Bottom Nav */}
-      <div className="sidebar-bottom">
-        <button
-          className="sidebar-item"
-          title="Sign Out"
-          onClick={() => { logout(); navigate('/login'); }}
-          style={{ background: 'transparent', border: 'none', cursor: 'pointer', outline: 'none', padding: 0 }}
-        >
-          <LogOut size={22} strokeWidth={1.8} />
-        </button>
-        <NavLink
-          to="/settings"
-          className={({ isActive }) =>
-            `sidebar-item ${isActive ? 'active' : ''}`
-          }
-          title="Settings"
-        >
-          <span className="sidebar-indicator" />
-          <Settings size={22} strokeWidth={1.8} />
-        </NavLink>
+        </div>
       </div>
     </aside>
   );

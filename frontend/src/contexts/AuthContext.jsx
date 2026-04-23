@@ -35,9 +35,9 @@ export function AuthProvider({ children }) {
 
   const switchRole = (role) => {
     const roleDefaults = {
-      nurse: { name: 'Ward Nurse', initials: 'WN', ward: 'ICU Ward 3' },
-      doctor: { name: 'Dr. Sharma', initials: 'DS', ward: 'ICU Ward 3' },
-      admin: { name: 'Admin User', initials: 'AU', ward: 'Hospital Admin' },
+      nurse: { id: 'nurse-priya', name: 'Priya Mehta', initials: 'PM', ward: 'ICU Ward 3' },
+      doctor: { id: 'doctor-demo', name: 'Dr. Sharma', initials: 'DS', ward: 'ICU Ward 3' },
+      admin: { id: 'admin-demo', name: 'Admin User', initials: 'AU', ward: 'Hospital Admin' },
     };
     updateUser({ role, ...(roleDefaults[role] || {}) });
   };

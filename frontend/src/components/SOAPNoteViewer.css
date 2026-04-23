@@ -224,6 +224,12 @@
   font-size: 12px;
   line-height: 1.6;
   color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: calc(1.6em * 2);
 }
 
 .soap-empty {
@@ -475,6 +481,12 @@
   line-height: 1.7;
   color: var(--text-primary);
   font-style: italic;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: calc(1.7em * 2);
 }
 
 /* Structured SOAP preview */
@@ -486,6 +498,7 @@
   background: var(--bg-card);
   border-radius: 12px;
   border: 1px solid var(--border-default);
+  overflow: hidden;
 }
 
 /* Save area */

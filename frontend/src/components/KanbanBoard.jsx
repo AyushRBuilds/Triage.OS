@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { GripVertical, Stethoscope, Clock, Plus, X, Calendar } from 'lucide-react';
-import { getTasks, updateTaskStatus, createTask, getPatients } from '../api/services';
+import { GripVertical, Stethoscope, Clock, Plus, X, Calendar, Trash2 } from 'lucide-react';
+import { getTasks, updateTaskStatus, createTask, deleteTask, getPatients } from '../api/services';
 import { toast } from './Toast';
 import './KanbanBoard.css';
 
@@ -16,6 +16,8 @@ export default function KanbanBoard() {
   const [patients, setPatients] = useState([]);
   const [patientFilter, setPatientFilter] = useState('all');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [deleteTaskId, setDeleteTaskId] = useState(null); // id of task pending deletion
+  const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [newTask, setNewTask] = useState({
     title: '',
@@ -83,6 +85,22 @@ export default function KanbanBoard() {
       toast.error('Could not save task. Check Supabase RLS policies.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteTask = async () => {
+    if (!deleteTaskId) return;
+    setDeleting(true);
+    try {
+      await deleteTask(deleteTaskId);
+      setTasks((prev) => prev.filter((t) => t.id !== deleteTaskId));
+      toast.success('Task deleted successfully.');
+    } catch (err) {
+      console.error('Failed to delete task:', err);
+      toast.error('Could not delete task. Please try again.');
+    } finally {
+      setDeleting(false);
+      setDeleteTaskId(null);
     }
   };
 
@@ -201,8 +219,17 @@ export default function KanbanBoard() {
                             >
                               <div className="kanban-card-top">
                                 <span className={`badge ${getPriorityBadge(task.priority)}`}>{task.priority}</span>
-                                <div className="kanban-drag-handle">
-                                  <GripVertical size={14} />
+                                <div className="kanban-card-actions">
+                                  <button
+                                    className="kanban-delete-btn"
+                                    title="Delete task"
+                                    onClick={(e) => { e.stopPropagation(); setDeleteTaskId(task.id); }}
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                  <div className="kanban-drag-handle">
+                                    <GripVertical size={14} />
+                                  </div>
                                 </div>
                               </div>
                               <span className="kanban-card-title">{task.title}</span>
@@ -228,6 +255,29 @@ export default function KanbanBoard() {
           })}
         </div>
       </DragDropContext>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteTaskId && (
+        <div className="kanban-modal-backdrop" onClick={() => setDeleteTaskId(null)}>
+          <div className="kanban-modal kanban-confirm-modal card animate-slide-up" onClick={(e) => e.stopPropagation()}>
+            <div className="kanban-confirm-icon">
+              <Trash2 size={28} />
+            </div>
+            <h4 className="kanban-confirm-title">Delete Task?</h4>
+            <p className="kanban-confirm-body text-body">
+              This action cannot be undone. The task will be permanently removed from the board.
+            </p>
+            <div className="kanban-confirm-actions">
+              <button className="btn btn-ghost" onClick={() => setDeleteTaskId(null)} disabled={deleting}>
+                Cancel
+              </button>
+              <button className="btn btn-danger" onClick={handleDeleteTask} disabled={deleting}>
+                {deleting ? 'Deleting…' : 'Yes, Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

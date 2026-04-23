@@ -13,36 +13,50 @@ export const toast = {
 };
 
 export function ToastContainer() {
-  const [toasts, setToasts] = useState([]);
+  const [queue, setQueue] = useState([]);
+  const [currentToast, setCurrentToast] = useState(null);
 
   useEffect(() => {
     addToastListener = (toastObj) => {
-      setToasts((prev) => [...prev, toastObj]);
-      setTimeout(() => {
-        setToasts((prev) => prev.filter((t) => t.id !== toastObj.id));
-      }, 5000);
+      setQueue((prev) => [...prev, toastObj]);
     };
     return () => { addToastListener = null; };
   }, []);
 
-  const removeToast = (id) => setToasts((prev) => prev.filter((t) => t.id !== id));
+  useEffect(() => {
+    if (!currentToast && queue.length > 0) {
+      setCurrentToast(queue[0]);
+      setQueue((prev) => prev.slice(1));
+    }
+  }, [queue, currentToast]);
+
+  useEffect(() => {
+    if (currentToast) {
+      const timer = setTimeout(() => {
+        setCurrentToast(null);
+      }, 3000); // 3 seconds per toast for a smoother sequence
+      return () => clearTimeout(timer);
+    }
+  }, [currentToast]);
+
+  const removeToast = () => setCurrentToast(null);
 
   return (
     <div className="toast-container">
-      {toasts.map((t) => (
-        <div key={t.id} className={`toast-message toast-${t.type} animate-slide-up`}>
+      {currentToast && (
+        <div key={currentToast.id} className={`toast-message toast-${currentToast.type} animate-slide-up`}>
           <div className="toast-icon">
-            {t.type === 'success' && <CheckCircle size={18} />}
-            {t.type === 'error' && <XCircle size={18} />}
-            {t.type === 'warning' && <AlertTriangle size={18} />}
-            {t.type === 'info' && <Info size={18} />}
+            {currentToast.type === 'success' && <CheckCircle size={18} />}
+            {currentToast.type === 'error' && <XCircle size={18} />}
+            {currentToast.type === 'warning' && <AlertTriangle size={18} />}
+            {currentToast.type === 'info' && <Info size={18} />}
           </div>
-          <span className="toast-text">{t.msg}</span>
-          <button className="toast-close" onClick={() => removeToast(t.id)}>
+          <span className="toast-text">{currentToast.msg}</span>
+          <button className="toast-close" onClick={removeToast}>
             <X size={14} />
           </button>
         </div>
-      ))}
+      )}
     </div>
   );
 }

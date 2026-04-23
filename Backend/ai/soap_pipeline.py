@@ -183,10 +183,10 @@ def _format_soap_with_llm(raw_text: str, entities: list[dict], urgency: dict) ->
         "You are an expert clinical medical scribe working in a hospital emergency department. "
         "Your task is to convert raw clinical transcripts into professional SOAP notes. "
         "You MUST respond with ONLY a valid JSON object — no markdown, no code fences, no commentary. "
-        "Every section MUST contain 1-3 complete, professional clinical sentences. NEVER leave a section empty."
+        "Every section MUST be extremely concise, containing at most 1-2 short sentences. NEVER leave a section empty, and DO NOT include unnecessary fluff."
     )
 
-    user_prompt = f"""Convert this raw clinical transcript into a structured SOAP note.
+    user_prompt = f"""Convert this raw clinical transcript into a strictly concise structured SOAP note.
 
 TRANSCRIPT:
 \"{raw_text}\"
@@ -194,16 +194,16 @@ TRANSCRIPT:
 EXTRACTED MEDICAL ENTITIES: {entity_summary}
 TRIAGE URGENCY: {urgency.get('label', 'Unknown')} (confidence: {urgency.get('confidence', 0):.1%})
 
-INSTRUCTIONS — follow these exactly:
-1. **Subjective (S):** Write 1-3 sentences summarizing patient demographics, chief complaint, reported symptoms, onset, duration, and relevant history. Use narrative clinical prose.
-2. **Objective (O):** Write 1-3 sentences documenting vital signs (format: HR ___ bpm, BP ___/___ mmHg, SpO2 __%, Temp ___°C, RR ___ breaths/min), physical exam findings, and any labs/tests mentioned. If specific values were mentioned in the transcript, include them.
-3. **Assessment (A):** Write 1-2 sentences with clinical impression, suspected diagnoses, severity, and triage classification.
-4. **Plan (P):** Write 1-3 sentences covering immediate interventions, medications with doses/routes, orders, consults, and disposition.
+INSTRUCTIONS — follow these exactly to keep it VERY short (max 2 lines per section):
+1. **Subjective (S):** Maximum 2 short sentences. Summarize demographics, chief complaint, and key symptoms only. No fluff.
+2. **Objective (O):** Maximum 2 short sentences. List vital signs (e.g. HR ___ bpm, BP ___/___ mmHg, SpO2 __%) and critical exam findings.
+3. **Assessment (A):** Maximum 1-2 short sentences. State clinical impression/diagnosis and triage classification.
+4. **Plan (P):** Maximum 2 short sentences. List immediate interventions, medications, and disposition concisely.
 
 CRITICAL RULES:
-- Write in complete professional clinical sentences, NOT bullet points or semicolon-separated lists.
-- EVERY section must have content. If the transcript lacks info for a section, write a clinically appropriate default (e.g., "Vital signs to be obtained" for missing vitals).
-- Use standard medical abbreviations where appropriate.
+- Write in brief, direct professional clinical sentences. NO extra commentary.
+- EVERY section must have content. If the transcript lacks info, write a brief default (e.g., "Vitals pending").
+- Use standard medical abbreviations to save space.
 
 Respond with ONLY this JSON (fill in the quoted values):
 {{"subjective": "...", "objective": "...", "assessment": "...", "plan": "..."}}"""
