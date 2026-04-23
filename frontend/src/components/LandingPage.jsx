@@ -26,8 +26,8 @@ export default function LandingPage() {
       ════════════════════════════════ */}
       <nav className="lp-nav">
         <a className="lp-logo" href="#">
-          <span className="lp-logo-text" style={{ fontWeight: 900, letterSpacing: '-1px', fontSize: '24px' }}>
-            triage<span className="lp-logo-accent">.os</span>
+          <span className="lp-logo-text" style={{ fontWeight: 900, letterSpacing: '-1.5px', fontSize: '24px' }}>
+            t<span className="lp-logo-accent">.os</span>
           </span>
         </a>
         <ul className="lp-nav-links">
