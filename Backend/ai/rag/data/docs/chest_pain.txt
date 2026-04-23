@@ -1,0 +1,4 @@
+Chest pain in the emergency department requires immediate assessment for Acute Coronary Syndrome (ACS), pulmonary embolism, and aortic dissection.
+Initial workup includes an ECG within 10 minutes of arrival, troponin levels, and a chest X-ray.
+High-risk patients (ST-elevation, hemodynamic instability) should be prioritized for catheterization or thrombolysis.
+Symptoms of ACS include substernal pressure, radiation to the left arm or jaw, and diaphoresis.

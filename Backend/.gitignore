@@ -1,0 +1,35 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv/
+
+# Environment variables
+.env
+.env.local
+
+# Databases
+*.db
+*.sqlite3
+
+# AI Models and heavy binaries
+ai/ner_model/medical_ner_model/
+ai/ner_model/medical_ner_model.zip
+ai/rag/chroma_db/
+ai/risk_scorer/
+ai/urgency_classifier/
+*.zip
+*.bin
+*.pt
+*.h5
+*.onnx
+*.joblib
+*.pkl
+
+# Logs
+*.log
