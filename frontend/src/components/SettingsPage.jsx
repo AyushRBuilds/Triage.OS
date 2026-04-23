@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import { supabase } from '../api/supabaseClient';
 import { User, Bell, Palette, Lock, Save, Check, Loader, Database, AlertTriangle } from 'lucide-react';
 import { toast } from './Toast';
@@ -8,6 +9,7 @@ import './SettingsPage.css';
 
 export default function SettingsPage() {
   const { user, updateUser } = useAuth();
+  const { preferences: notifications, setPreferences: setNotifications } = useNotifications();
   const [activeTab, setActiveTab] = useState('profile');
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState({
@@ -17,43 +19,11 @@ export default function SettingsPage() {
     ward: user?.ward || '',
     phone: user?.phone || '+91 98765 43210',
   });
-  const [notifications, setNotifications] = useState({
-    criticalAlerts: true,
-    statMeds: true,
-    shiftSwaps: true,
-    soapNotes: false,
-    emailDigest: false,
-  });
   const [theme, setTheme] = useState('light');
   const [passwords, setPasswords] = useState({ current: '', newPw: '', confirm: '' });
   const [saveMsg, setSaveMsg] = useState('');
   const [confirmReset, setConfirmReset] = useState(false);
 
-  // Load notification preferences from Supabase on mount
-  useEffect(() => {
-    async function loadPrefs() {
-      try {
-        const { data } = await supabase
-          .from('user_preferences')
-          .select('*')
-          .eq('user_id', user?.email)
-          .single();
-        if (data) {
-          setNotifications({
-            criticalAlerts: data.critical_alerts ?? true,
-            statMeds: data.stat_meds ?? true,
-            shiftSwaps: data.shift_swaps ?? true,
-            soapNotes: data.soap_notes ?? false,
-            emailDigest: data.email_digest ?? false,
-          });
-        }
-      } catch (err) {
-        // Table may not exist yet — use defaults
-        console.warn('Could not load notification prefs:', err.message);
-      }
-    }
-    if (user?.email) loadPrefs();
-  }, [user?.email]);
 
   // Save profile to Supabase
   const handleSaveProfile = async () => {

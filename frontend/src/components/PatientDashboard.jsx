@@ -48,14 +48,14 @@ Vitals (Last Recorded):
 
 MEDICATIONS
 -----------
-${patient.medications?.length > 0 
-  ? patient.medications.map(m => `- ${m.name} (${m.urgency}): ${m.schedule} @ ${m.time}`).join('\n')
-  : 'No active medications.'}
+${patient.medications?.length > 0
+          ? patient.medications.map(m => `- ${m.name} (${m.urgency}): ${m.schedule} @ ${m.time}`).join('\n')
+          : 'No active medications.'}
 
 RECENT CLINICAL NOTES (SOAP)
 ----------------------------
-${notes.length > 0 
-  ? notes.map(n => `
+${notes.length > 0
+          ? notes.map(n => `
 Date: ${new Date(n.recorded_at).toLocaleString()}
 Urgency: ${n.urgency_level || 'N/A'}
 [SUBJECTIVE]
@@ -67,7 +67,7 @@ ${n.assessment || 'N/A'}
 [PLAN]
 ${n.plan || 'N/A'}
 ------------------------------------------------------------`).join('\n')
-  : 'No clinical notes found.'}
+          : 'No clinical notes found.'}
 
 ============================================================
 END OF REPORT
@@ -96,15 +96,15 @@ END OF REPORT
   useEffect(() => {
     async function load() {
       const p = await getPatients();
-      
+
       // Filter for nurses
       let filtered = p;
       if (user?.role === 'nurse') {
-        filtered = p.filter(patient => 
+        filtered = p.filter(patient =>
           patient.assignedNurses?.some(n => n.id === user.id)
         );
       }
-      
+
       setPatients(filtered);
       if (filtered.length > 0) setSelectedPatient(filtered[0]);
     }

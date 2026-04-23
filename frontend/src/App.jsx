@@ -18,6 +18,7 @@ import NurseChat from './components/NurseChat';
 import PatientDashboard from './components/PatientDashboard';
 import ReportsPage from './components/ReportsPage';
 import WardOverview from './components/WardOverview';
+import SharedReportView from './components/SharedReportView';
 import { ToastContainer } from './components/Toast';
 
 function AppShell({ children }) {
@@ -55,6 +56,18 @@ export default function App() {
   // Login page is public
   if (location.pathname === '/login') {
     return !isAuthenticated ? <LoginPage /> : <Navigate to="/" replace />;
+  }
+
+  // Shared Report view is public and standalone
+  if (location.pathname.startsWith('/share/report/')) {
+    return (
+      <>
+        <Routes>
+          <Route path="/share/report/:patientId" element={<SharedReportView />} />
+        </Routes>
+        <ToastContainer />
+      </>
+    );
   }
 
   // All other routes are protected

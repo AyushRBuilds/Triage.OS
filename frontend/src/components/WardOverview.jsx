@@ -3,7 +3,8 @@ import {
   Bed, Users, Activity, AlertTriangle, Wrench, Search, UserPlus, LogOut as Discharge,
   X, ChevronDown, Clock, MapPin, Heart, Filter
 } from 'lucide-react';
-import { getPatients } from '../api/services';
+import { getPatients, addPatient, deletePatient } from '../api/services';
+import { toast } from './Toast';
 import './WardOverview.css';
 
 const INITIAL_ROOMS = [
@@ -11,27 +12,27 @@ const INITIAL_ROOMS = [
     id: '101',
     beds: [
       { id: 'Bed 1', status: 'available' },
-      { id: 'Bed 2', status: 'occupied', patient: 'Ms. Fatima Khan', priority: 'P5', admittedAt: '12:10 PM' },
-      { id: 'Bed 3', status: 'occupied', patient: 'Ms. Anita Patel', priority: 'P3', admittedAt: '09:15 AM' },
-      { id: 'Bed 4', status: 'occupied', patient: 'Mrs. Meera Joshi', priority: 'P3', admittedAt: '08:30 AM' },
+      { id: 'Bed 2', status: 'available' },
+      { id: 'Bed 3', status: 'available' },
+      { id: 'Bed 4', status: 'available' },
     ],
   },
   {
     id: '102',
     beds: [
-      { id: 'Bed 5', status: 'occupied', patient: 'Mrs. Lakshmi Devi', priority: 'P4', admittedAt: '08:45 AM' },
+      { id: 'Bed 5', status: 'available' },
       { id: 'Bed 6', status: 'available' },
-      { id: 'Bed 7', status: 'critical', patient: 'Mr. Raj Sharma', priority: 'P1', admittedAt: '10:30 AM' },
-      { id: 'Bed 8', status: 'maintenance' },
+      { id: 'Bed 7', status: 'available' },
+      { id: 'Bed 8', status: 'available' },
     ],
   },
   {
     id: '103',
     beds: [
-      { id: 'Bed 9', status: 'critical', patient: 'Mr. Arjun Reddy', priority: 'P1', admittedAt: '07:15 AM' },
+      { id: 'Bed 9', status: 'available' },
       { id: 'Bed 10', status: 'available' },
-      { id: 'Bed 11', status: 'occupied', patient: 'Mr. Vikram Singh', priority: 'P2', admittedAt: '06:30 AM' },
-      { id: 'Bed 12', status: 'occupied', patient: 'Mr. Suresh Kumar', priority: 'P2', admittedAt: '12:00 PM' },
+      { id: 'Bed 11', status: 'available' },
+      { id: 'Bed 12', status: 'available' },
     ],
   },
   {
@@ -139,21 +140,21 @@ export default function WardOverview() {
   }, [rooms]);
 
   // ── CRUD Actions ──
-  const handleDischarge = (roomId, bedId) => {
-    setRooms((prev) =>
-      prev.map((room) =>
-        room.id === roomId
-          ? {
-              ...room,
-              beds: room.beds.map((bed) =>
-                bed.id === bedId
-                  ? { id: bed.id, status: 'available' }
-                  : bed
-              ),
-            }
-          : room
-      )
-    );
+  const handleDischarge = async (roomId, bedId) => {
+    try {
+      // Find patient by bedId
+      const allPatients = await getPatients();
+      const patient = allPatients.find(p => p.bed === bedId);
+      if (patient) {
+        await deletePatient(patient.id);
+        toast.success(`${patient.name} discharged successfully.`);
+        // Reload to sync UI
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error('Failed to discharge:', err);
+      toast.error('Discharge failed.');
+    }
     setActiveBed(null);
   };
 
@@ -176,29 +177,32 @@ export default function WardOverview() {
     setActiveBed(null);
   };
 
-  const handleAdmit = () => {
+  const handleAdmit = async () => {
     if (!admitForm.name.trim()) return;
     const { roomId, bedId } = admitModal;
-    setRooms((prev) =>
-      prev.map((room) =>
-        room.id === roomId
-          ? {
-              ...room,
-              beds: room.beds.map((bed) =>
-                bed.id === bedId
-                  ? {
-                      ...bed,
-                      status: admitForm.priority === 'P1' ? 'critical' : 'occupied',
-                      patient: admitForm.name,
-                      priority: admitForm.priority,
-                      admittedAt: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-                    }
-                  : bed
-              ),
-            }
-          : room
-      )
-    );
+    
+    try {
+      const payload = {
+        name: admitForm.name,
+        age: 45, // default
+        gender: 'M',
+        bed: bedId,
+        ward: 'General Ward 1',
+        risk: admitForm.priority,
+        diagnosis: 'Admitted via Ward Map',
+        initials: admitForm.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+      };
+      
+      await addPatient(payload);
+      toast.success(`${admitForm.name} admitted to ${bedId}`);
+      
+      // Reload to sync
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (err) {
+      console.error('Admit failed:', err);
+      toast.error('Failed to admit patient.');
+    }
+    
     setAdmitModal(null);
     setAdmitForm({ name: '', priority: 'P3' });
   };

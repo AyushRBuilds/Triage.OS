@@ -59,7 +59,7 @@ def generate_reading(baseline: Dict = None, severity: float = 0.0) -> Dict:
 def stream_vitals(
     patient_id: int,
     steps: int = 20,
-    interval_s: float = 1.0,
+    interval_s: float = 5.0,
     severity: float = 0.0,
 ) -> Generator[Dict, None, None]:
     """Yield simulated vital readings at `interval_s` intervals."""

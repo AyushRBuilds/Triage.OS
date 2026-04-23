@@ -1,0 +1,38 @@
+============================================================
+triage.os — Model Setup Instructions
+============================================================
+
+To get the backend fully functional after cloning the repository, 
+follow these steps to integrate the AI models:
+
+1. CLONE THE REPOSITORY
+   Make sure you have the latest code from GitHub.
+
+2. LOCATE THE ZIP FILE
+   Find the 'triage_models.zip' file.
+
+3. EXTRACT THE MODELS
+   Extract the contents of 'triage_models.zip' directly into 
+   the 'Backend/' directory of the project.
+   
+   - The ZIP contains an 'ai/' folder.
+   - After extraction, you should see 'Backend/ai/' containing 
+     folders like 'ner_model', 'rag', 'risk_scorer', and 'urgency_classifier'.
+
+4. VERIFY THE STRUCTURE
+   Ensure the path looks like this:
+   [Project Root]/Backend/ai/ner_model/medical_ner_model/meta.json
+
+5. CONFIGURE ENVIRONMENT
+   Copy 'Backend/.env.example' to 'Backend/.env' and fill in 
+   the required API keys (OpenRouter, Supabase, etc.).
+
+6. START THE BACKEND
+   From the 'Backend/' directory:
+   - Create/Activate virtual environment (venv)
+   - Install dependencies: pip install -r requirements.txt
+   - Run the server: python main.py
+
+The system will automatically detect the model files in the 'ai/' 
+folder and initialize the clinical pipeline.
+============================================================
