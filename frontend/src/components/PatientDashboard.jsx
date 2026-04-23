@@ -1,18 +1,94 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, Heart, Wind, FileText, User, Calendar, ChevronRight, Search, Filter, Info } from 'lucide-react';
-import { getPatients } from '../api/services';
+import { Activity, Heart, Wind, FileText, User, Calendar, ChevronRight, Search, Filter, Info, Download } from 'lucide-react';
+import { getPatients, getSoapNotesByPatient } from '../api/services';
+import { useAuth } from '../contexts/AuthContext';
 import { getRiskBadgeClass, getRiskColor } from '../data/mockData';
 import VitalMiniCard from './ui/VitalMiniCard';
 import './PatientDashboard.css';
 
 export default function PatientDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [patients, setPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [riskFilter, setRiskFilter] = useState('all');
   const [showExpandedVitals, setShowExpandedVitals] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const downloadReport = async (patient) => {
+    if (!patient) return;
+    setIsDownloading(true);
+    try {
+      const notes = await getSoapNotesByPatient(patient.id);
+      const reportContent = `
+============================================================
+           TRIAGE.OS — COMPREHENSIVE PATIENT REPORT
+============================================================
+GENERATED AT: ${new Date().toLocaleString()}
+
+PATIENT INFORMATION
+-------------------
+Name:       ${patient.name}
+Age/Gender: ${patient.age}y / ${patient.gender}
+Bed:        ${patient.bed}
+Ward:       ${patient.ward}
+Risk Level: ${patient.risk}
+Admitted:   ${patient.admittedDate}
+
+CLINICAL STATUS
+---------------
+Diagnosis:  ${patient.diagnosis}
+Vitals (Last Recorded):
+  - HR:   ${patient.vitals?.hr || 'N/A'} bpm
+  - SpO2: ${patient.vitals?.spo2 || 'N/A'} %
+  - BP:   ${patient.vitals?.bpSys || 'N/A'}/${patient.vitals?.bpDia || 'N/A'} mmHg
+  - Temp: ${patient.vitals?.temp || 'N/A'} °C
+
+MEDICATIONS
+-----------
+${patient.medications?.length > 0 
+  ? patient.medications.map(m => `- ${m.name} (${m.urgency}): ${m.schedule} @ ${m.time}`).join('\n')
+  : 'No active medications.'}
+
+RECENT CLINICAL NOTES (SOAP)
+----------------------------
+${notes.length > 0 
+  ? notes.map(n => `
+Date: ${new Date(n.recorded_at).toLocaleString()}
+Urgency: ${n.urgency_level || 'N/A'}
+[SUBJECTIVE]
+${n.subjective || 'N/A'}
+[OBJECTIVE]
+${n.objective || 'N/A'}
+[ASSESSMENT]
+${n.assessment || 'N/A'}
+[PLAN]
+${n.plan || 'N/A'}
+------------------------------------------------------------`).join('\n')
+  : 'No clinical notes found.'}
+
+============================================================
+END OF REPORT
+============================================================
+    `;
+
+      const blob = new Blob([reportContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Report_${patient.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download failed', err);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const generateSparkline = (base, variance, count = 12) =>
     Array.from({ length: count }, () => base + Math.round((Math.random() - 0.5) * variance * 2));
@@ -20,11 +96,20 @@ export default function PatientDashboard() {
   useEffect(() => {
     async function load() {
       const p = await getPatients();
-      setPatients(p);
-      if (p.length > 0) setSelectedPatient(p[0]);
+      
+      // Filter for nurses
+      let filtered = p;
+      if (user?.role === 'nurse') {
+        filtered = p.filter(patient => 
+          patient.assignedNurses?.some(n => n.id === user.id)
+        );
+      }
+      
+      setPatients(filtered);
+      if (filtered.length > 0) setSelectedPatient(filtered[0]);
     }
     load();
-  }, []);
+  }, [user]);
 
   const filteredPatients = patients.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -110,6 +195,9 @@ export default function PatientDashboard() {
             <div className="pd-detail-actions">
               <button className={`btn btn-sm ${showExpandedVitals ? 'btn-ghost' : 'btn-primary'}`} onClick={() => setShowExpandedVitals(!showExpandedVitals)}>
                 <Activity size={14} /> {showExpandedVitals ? 'Hide Vitals' : 'Vitals'}
+              </button>
+              <button className="btn btn-ghost btn-sm" onClick={() => downloadReport(selectedPatient)} disabled={isDownloading}>
+                <Download size={14} /> {isDownloading ? 'Downloading...' : 'Report'}
               </button>
               <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/soap-notes?patient=${selectedPatient.id}`)}>
                 <FileText size={14} /> SOAP Notes

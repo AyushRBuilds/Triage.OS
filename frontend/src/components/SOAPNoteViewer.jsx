@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Mic, MicOff, Save, Trash2, Clock, ChevronDown, FileText, Plus, Edit3, X, Zap, AlertTriangle, Activity, Pill, Stethoscope, Brain, Loader2 } from 'lucide-react';
+import { Mic, MicOff, Save, Trash2, Clock, ChevronDown, FileText, Plus, Edit3, X, Zap, AlertTriangle, Activity, Pill, Stethoscope, Brain, Loader2, Check } from 'lucide-react';
 import { getSoapNotes, createSoapNote, deleteSoapNote, getPatients } from '../api/services';
 import { supabase } from '../api/supabaseClient';
 import { toast } from './Toast';
@@ -25,6 +25,8 @@ export default function SOAPNoteViewer() {
   const [editingNote, setEditingNote] = useState(null);
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [manualInputText, setManualInputText] = useState('');
   const [formData, setFormData] = useState({
     patientId: '',
     subjective: '',
@@ -139,19 +141,10 @@ export default function SOAPNoteViewer() {
     setIsRecording(true);
   };
 
-  const stopRecording = async () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.onend = null; // prevent auto-restart
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-    setIsRecording(false);
-
-    const text = finalTranscriptRef.current.trim() || liveTranscript.trim();
-    if (!text) return;
-
-    // Send to backend AI pipeline
+  const handleProcessText = async (text) => {
+    if (!text.trim()) return;
     setProcessing(true);
+    setAiResult(null);
     sessionStorage.setItem('soap_processing', 'true');
     try {
       const res = await fetch(`${API_URL}/soap/process_raw`, {
@@ -165,12 +158,28 @@ export default function SOAPNoteViewer() {
       
       sessionStorage.setItem('soap_aiResult', JSON.stringify(fullResult));
       sessionStorage.removeItem('soap_processing');
+      setShowManualInput(false);
+      setManualInputText('');
       window.dispatchEvent(new Event('soap_ai_finished'));
     } catch (err) {
       console.error('SOAP pipeline error:', err);
       sessionStorage.removeItem('soap_processing');
       window.dispatchEvent(new Event('soap_ai_error'));
     }
+  };
+
+  const stopRecording = async () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.onend = null;
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setIsRecording(false);
+
+    const text = finalTranscriptRef.current.trim() || liveTranscript.trim();
+    if (!text) return;
+
+    handleProcessText(text);
   };
 
   const handleMicClick = () => {
@@ -556,9 +565,43 @@ export default function SOAPNoteViewer() {
                 {processing ? <Loader2 size={36} className="soap-spinner" /> : isRecording ? <MicOff size={36} /> : <Mic size={36} />}
               </button>
               <span className="text-body" style={{ marginTop: 16, fontWeight: 600, color: isRecording ? 'var(--green-primary)' : 'var(--text-secondary)' }}>
-                {processing ? 'Running AI pipeline...' : isRecording ? 'Recording... Tap to stop & analyze' : 'Tap to record'}
+                {processing ? 'Running AI pipeline...' : isRecording ? 'Recording... Tap to pause' : 'Tap to record'}
               </span>
+              
+              <div style={{ display: 'flex', gap: 12, marginTop: 32 }}>
+                {isRecording && (
+                  <button className="btn btn-primary" onClick={stopRecording} style={{ background: 'var(--green-primary)', borderColor: 'var(--green-primary)' }}>
+                    <Check size={16} /> Confirm Spoken
+                  </button>
+                )}
+                {!isRecording && !processing && (
+                  <button className="btn btn-ghost" onClick={() => setShowManualInput(true)}>
+                    <Edit3 size={16} /> Manual Text Entry
+                  </button>
+                )}
+              </div>
             </div>
+
+            {showManualInput && !processing && (
+              <div className="soap-live-transcript card animate-fade-in" style={{ marginTop: 24, padding: 20 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <span className="text-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Edit3 size={12}/> Type Raw Clinical Text</span>
+                  <button className="btn btn-ghost btn-sm" style={{ padding: 4 }} onClick={() => setShowManualInput(false)}><X size={16}/></button>
+                </div>
+                <textarea 
+                  className="input" 
+                  style={{ width: '100%', minHeight: 120, fontSize: 14, lineHeight: 1.5, background: 'rgba(0,0,0,0.02)' }}
+                  placeholder="e.g. Patient presents with severe headache and light sensitivity for 2 days. Vitals show BP 140/90. Started on Paracetamol..."
+                  value={manualInputText}
+                  onChange={(e) => setManualInputText(e.target.value)}
+                />
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+                  <button className="btn btn-primary" onClick={() => handleProcessText(manualInputText)} disabled={!manualInputText.trim()}>
+                    <Zap size={14} /> Process with AI
+                  </button>
+                </div>
+              </div>
+            )}
 
             {isRecording && (
               <div className="soap-waveform">

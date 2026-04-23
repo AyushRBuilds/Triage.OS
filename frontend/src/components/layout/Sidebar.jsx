@@ -19,7 +19,6 @@ const roleNavItems = {
   nurse: [
     { to: '/nurse/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/patients', icon: Users, label: 'Patients' },
-    { to: '/ward-overview', icon: Map, label: 'Ward Overview' },
 
     { to: '/soap-notes', icon: Mic, label: 'SOAP Notes' },
     { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
@@ -28,10 +27,10 @@ const roleNavItems = {
   doctor: [
     { to: '/doctor/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/patients', icon: Users, label: 'Patients' },
-    { to: '/ward-overview', icon: Map, label: 'Ward Overview' },
 
     { to: '/soap-notes', icon: Mic, label: 'SOAP Notes' },
     { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
+    { to: '/admin/reports', icon: BarChart3, label: 'Reports' },
   ],
   admin: [
     { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },

@@ -16,6 +16,7 @@ import AdminDashboard from './components/AdminDashboard';
 import SettingsPage from './components/SettingsPage';
 import NurseChat from './components/NurseChat';
 import PatientDashboard from './components/PatientDashboard';
+import ReportsPage from './components/ReportsPage';
 import WardOverview from './components/WardOverview';
 import { ToastContainer } from './components/Toast';
 
@@ -77,12 +78,16 @@ export default function App() {
         <Route path="/shift-swap" element={<ShiftSwapPanel />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/patient-dashboard" element={<PatientDashboard />} />
-        <Route path="/ward-overview" element={<WardOverview />} />
+        <Route path="/ward-overview" element={
+          user?.role === 'admin' ? <WardOverview /> : <Navigate to="/" />
+        } />
 
         {/* Admin specific */}
         <Route path="/admin/patients" element={<AdminDashboard />} />
         <Route path="/admin/staff" element={<AdminDashboard />} />
-        <Route path="/admin/reports" element={<AdminDashboardPage />} />
+        <Route path="/admin/reports" element={
+          (user?.role === 'admin' || user?.role === 'doctor') ? <ReportsPage /> : <Navigate to="/" />
+        } />
         <Route path="/patients" element={<PatientDashboard />} />
 
         {/* Fallback — go to role dashboard */}
