@@ -19,11 +19,37 @@ export default function SettingsPage() {
     ward: user?.ward || '',
     phone: user?.phone || '+91 98765 43210',
   });
+
   const [theme, setTheme] = useState('light');
   const [passwords, setPasswords] = useState({ current: '', newPw: '', confirm: '' });
   const [saveMsg, setSaveMsg] = useState('');
   const [confirmReset, setConfirmReset] = useState(false);
 
+  // Load notification preferences from Supabase on mount
+  useEffect(() => {
+    async function loadPrefs() {
+      try {
+        const { data } = await supabase
+          .from('user_preferences')
+          .select('*')
+          .eq('user_id', user?.email)
+          .single();
+        if (data) {
+          setNotifications({
+            criticalAlerts: data.critical_alerts ?? true,
+            statMeds: data.stat_meds ?? true,
+            shiftSwaps: data.shift_swaps ?? true,
+            soapNotes: data.soap_notes ?? false,
+            emailDigest: data.email_digest ?? false,
+          });
+        }
+      } catch (err) {
+        // Table may not exist yet — use defaults
+        console.warn('Could not load notification prefs:', err.message);
+      }
+    }
+    if (user?.email) loadPrefs();
+  }, [user?.email]);
 
   // Save profile to Supabase
   const handleSaveProfile = async () => {
@@ -36,9 +62,9 @@ export default function SettingsPage() {
           ward: profile.ward,
         })
         .eq('email', user?.email);
-      
+
       if (error) throw error;
-      
+
       // Update auth context so whole app reflects changes
       updateUser({ ...user, name: profile.name, ward: profile.ward });
       setSaveMsg('Profile saved successfully!');
@@ -86,7 +112,7 @@ export default function SettingsPage() {
           soap_notes: notifications.soapNotes,
           email_digest: notifications.emailDigest,
         }, { onConflict: 'user_id' });
-      
+
       if (error) throw error;
       setSaveMsg('Notification preferences saved!');
     } catch (err) {
@@ -257,7 +283,14 @@ export default function SettingsPage() {
                 </button>
               </div>
               <div className="settings-actions">
-                <button className="btn btn-primary" onClick={() => handleSaveGeneric('Theme')}>
+                <button className="btn btn-primary" onClick={() => {
+                  document.body.classList.remove('light', 'dark');
+                  document.body.classList.add(theme);
+                  localStorage.setItem('theme', theme);
+
+                  setSaveMsg('Theme applied successfully!');
+                  setTimeout(() => setSaveMsg(''), 3000);
+                }}>
                   <Save size={14} /> Apply Theme
                 </button>
               </div>
@@ -294,7 +327,7 @@ export default function SettingsPage() {
             <div className="settings-section animate-fade-in">
               <h4 className="text-card-title">System Administration</h4>
               <p className="text-body" style={{ marginBottom: 20 }}>Manage database and system-level configuration.</p>
-              
+
               <div className="settings-form-grid" style={{ maxWidth: 500 }}>
                 <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: 16 }}>
                   <h5 style={{ color: '#DC2626', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, fontSize: 14 }}>
@@ -303,8 +336,8 @@ export default function SettingsPage() {
                   <p style={{ fontSize: 13, color: '#991B1B', marginBottom: 16, lineHeight: 1.5 }}>
                     This will permanently delete all current data and restore the original seed data (patients, nurses, assignments, tasks, etc). This action cannot be undone.
                   </p>
-                  <button 
-                    className="btn" 
+                  <button
+                    className="btn"
                     style={{ background: '#DC2626', color: 'white', border: 'none', padding: '10px 16px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
                     onClick={handleResetDatabase}
                     disabled={saving}
