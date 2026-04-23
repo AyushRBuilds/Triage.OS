@@ -4,8 +4,7 @@ import { Users, UserCheck, AlertTriangle, BarChart3, RefreshCw } from 'lucide-re
 import { getPatients, getNurses, getDashboardStats } from '../../api/services';
 import { getRiskBadgeClass } from '../../data/mockData';
 import { useNavigate } from 'react-router-dom';
-import ScheduleCard from '../ui/ScheduleCard';
-import { getScheduleData } from '../../api/services';
+
 import './RoleDashboard.css';
 
 export default function AdminDashboardPage() {
@@ -14,17 +13,15 @@ export default function AdminDashboardPage() {
   const [patients, setPatients] = useState([]);
   const [nurses, setNurses] = useState([]);
   const [stats, setStats] = useState({ totalPatients: 0, p1Count: 0, statMeds: 0, onShift: 0 });
-  const [schedule, setSchedule] = useState({ days: [] });
 
   useEffect(() => {
     async function load() {
-      const [p, n, st, sched] = await Promise.all([
-        getPatients(), getNurses(), getDashboardStats(), getScheduleData()
+      const [p, n, st] = await Promise.all([
+        getPatients(), getNurses(), getDashboardStats()
       ]);
       setPatients(p);
       setNurses(n);
       setStats(st);
-      setSchedule(sched);
     }
     load();
   }, []);
@@ -33,39 +30,45 @@ export default function AdminDashboardPage() {
     <div className="role-dashboard" id="admin-dashboard-page">
       <div className="rd-grid">
         {/* Profile */}
-        <div className="rd-profile-card card">
-          <div className="rd-profile-header">
-            <div className="rd-profile-avatar" style={{ background: '#F59E0B' }}>{user?.initials || 'KR'}</div>
-            <div className="rd-profile-info">
-              <h3 className="rd-profile-name">{user?.name || 'Admin'}</h3>
-              <span className="text-body">{user?.ward || 'Hospital Admin'}</span>
-              <span className="badge badge-p3" style={{ marginTop: 4 }}>Administrator</span>
+        <div className="rd-profile-card card" style={{ position: 'relative', overflow: 'hidden' }}>
+          {/* Decorative background circle */}
+          <div style={{ position: 'absolute', top: -50, right: -50, width: 150, height: 150, borderRadius: '50%', background: 'var(--green-light)', opacity: 0.5 }} />
+          
+          <div className="rd-profile-header" style={{ position: 'relative', zIndex: 1, paddingBottom: 24, borderBottom: '1px solid var(--border-default)', marginBottom: 24 }}>
+            <div className="rd-profile-avatar" style={{ background: 'var(--green-primary)', color: 'white', width: 64, height: 64, fontSize: 24, boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)' }}>
+              {user?.initials || 'AD'}
+            </div>
+            <div className="rd-profile-info" style={{ marginLeft: 16 }}>
+              <h3 className="rd-profile-name" style={{ color: 'var(--text-main)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px' }}>
+                {user?.name === 'Hospital Admin' ? 'System Administrator' : (user?.name || 'Administrator')}
+              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6 }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: 14, fontWeight: 500 }}>{user?.ward || 'All Wards'}</span>
+                <span className="badge badge-p3" style={{ background: 'var(--green-light)', color: 'var(--green-text)', border: '1px solid rgba(16, 185, 129, 0.1)' }}>Admin User</span>
+              </div>
             </div>
           </div>
-          <div className="rd-profile-stats">
-            <div className="rd-pstat">
-              <span className="rd-pstat-num">{stats.totalPatients}</span>
-              <span className="text-label">Patients</span>
+          <div className="rd-profile-stats" style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+            <div className="rd-pstat" style={{ alignItems: 'center' }}>
+              <span className="rd-pstat-num" style={{ color: 'var(--text-main)', fontSize: 28, fontWeight: 800 }}>{stats.totalPatients}</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '1px', marginTop: 4 }}>Patients</span>
             </div>
-            <div className="rd-pstat">
-              <span className="rd-pstat-num">{nurses.length}</span>
-              <span className="text-label">Staff</span>
+            <div className="rd-pstat" style={{ alignItems: 'center' }}>
+              <span className="rd-pstat-num" style={{ color: 'var(--text-main)', fontSize: 28, fontWeight: 800 }}>{nurses.length}</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '1px', marginTop: 4 }}>Staff</span>
             </div>
-            <div className="rd-pstat">
-              <span className="rd-pstat-num" style={{ color: 'var(--risk-p1)' }}>{stats.p1Count}</span>
-              <span className="text-label">Critical</span>
+            <div className="rd-pstat" style={{ alignItems: 'center' }}>
+              <span className="rd-pstat-num" style={{ color: 'var(--risk-p1)', fontSize: 28, fontWeight: 800 }}>{stats.p1Count}</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '1px', marginTop: 4 }}>Critical</span>
             </div>
-            <div className="rd-pstat">
-              <span className="rd-pstat-num">{stats.onShift}</span>
-              <span className="text-label">On Duty</span>
+            <div className="rd-pstat" style={{ alignItems: 'center' }}>
+              <span className="rd-pstat-num" style={{ color: 'var(--text-main)', fontSize: 28, fontWeight: 800 }}>{stats.onShift}</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '1px', marginTop: 4 }}>On Duty</span>
             </div>
           </div>
         </div>
 
-        {/* Schedule */}
-        <div className="rd-schedule-area">
-          <ScheduleCard schedule={schedule} />
-        </div>
+
 
         {/* Staff overview */}
         <div className="rd-notifications card">

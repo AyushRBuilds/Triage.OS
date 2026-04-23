@@ -167,16 +167,25 @@ export default function VoiceAssistant() {
 
   return (
     <>
-      {/* Floating button */}
+      {/* Floating buttons */}
       {!isOpen && (
-        <button
-          className="floating-chat-btn va-btn"
-          onClick={() => setIsOpen(true)}
-          id="voice-assistant-btn"
-        >
-          <Mic size={24} />
-          <span className="floating-chat-pulse" />
-        </button>
+        <div className="fab-container">
+          <button
+            className="fab-chat"
+            onClick={() => setIsOpen(true)}
+            title="AI Assistant"
+          >
+            <MessageCircle size={22} />
+          </button>
+
+          <button
+            className="fab-voice-soap"
+            onClick={() => navigate('/soap-notes')}
+          >
+            <Mic size={22} />
+            <span>Voice to SOAP</span>
+          </button>
+        </div>
       )}
 
       {/* Voice Assistant panel */}

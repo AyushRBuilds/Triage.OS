@@ -20,24 +20,34 @@ export default function NurseDashboard() {
   const [schedule, setSchedule] = useState({ days: [] });
   const [activeTasks, setActiveTasks] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
-  const [activeTab, setActiveTab] = useState('patients');
+
 
   // Live vitals
   const { patients, isConnected } = useSimulatedVitals(rawPatients);
 
   useEffect(() => {
     async function loadData() {
-      const [pts, st, sched, tks] = await Promise.all([
-        getPatients(),
-        getDashboardStats(),
-        getScheduleData(),
-        getTasks(),
-      ]);
-      setRawPatients(pts);
-      setStats(st);
-      setSchedule(sched);
-      setActiveTasks(tks.filter((t) => t.status !== 'done'));
-      if (pts.length > 0) setSelectedPatient(pts[0]);
+      try {
+        const [pts, st, sched, tks] = await Promise.all([
+          getPatients(),
+          getDashboardStats(),
+          getScheduleData(),
+          getTasks(),
+        ]);
+        setRawPatients(pts);
+        setStats(st);
+        setSchedule(sched);
+        setActiveTasks(tks.filter((t) => t.status !== 'done'));
+        const assignedPts = pts.filter((p) => p.assignedNurses?.some((n) => n.id === user?.id) || p.assignedNurse === user?.name);
+        if (assignedPts.length > 0) setSelectedPatient(assignedPts[0]);
+        else setSelectedPatient(null);
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+        // Supabase error hint if the table doesn't exist
+        if (err.message?.includes('patient_assignments')) {
+          alert('Database Error: Please run the multiple nurses SQL migration in Supabase! The patient_assignments table is missing.');
+        }
+      }
     }
     loadData();
   }, []);
@@ -52,28 +62,12 @@ export default function NurseDashboard() {
       base + Math.round((Math.random() - 0.5) * variance * 2)
     );
 
-  const tabs = [
-    { key: 'patients', label: 'Patients' },
-    { key: 'soap', label: 'SOAP Notes' },
-    { key: 'tasks', label: 'Tasks' },
-    { key: 'ai', label: 'AI Chat' },
-  ];
+
 
   return (
     <div className="dashboard" id="nurse-dashboard">
       <div className="dashboard-left">
-        {/* Tab navigation */}
-        <div className="tab-group">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              className={`tab-pill ${activeTab === tab.key ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+
 
         {/* Stats row */}
         <div className="dashboard-stats">
@@ -97,6 +91,7 @@ export default function NurseDashboard() {
         {/* Patient list */}
         <div className="dashboard-patient-list">
           {patients
+            .filter((p) => p.assignedNurses?.some((n) => n.id === user?.id) || p.assignedNurse === user?.name)
             .sort((a, b) => {
               const order = { P1: 0, P2: 1, P3: 2, P4: 3, P5: 4 };
               return (order[a.risk] || 5) - (order[b.risk] || 5);
@@ -123,7 +118,7 @@ export default function NurseDashboard() {
           </div>
           <div className="dashboard-tasks-scroll">
             {activeTasks.map((task) => (
-              <div key={task.id} className={`task-mini-card ${task.priority === 'STAT' ? 'card-dark' : 'card'}`}>
+              <div key={task.id} className="task-mini-card card">
                 <div className="task-mini-top">
                   <span className={`badge ${task.priority === 'STAT' ? 'badge-stat' : task.priority === 'Urgent' ? 'badge-urgent' : 'badge-routine'}`}>
                     {task.priority}
@@ -140,7 +135,7 @@ export default function NurseDashboard() {
         </div>
 
         {/* Vitals mini cards for selected patient */}
-        {currentPatient && (
+        {currentPatient ? (
           <>
             <div className="dashboard-section-header">
               <h3 className="text-card-title">{currentPatient.name} — Vitals</h3>
@@ -168,7 +163,40 @@ export default function NurseDashboard() {
                 sparklineData={generateSparkline(currentPatient.vitals.bpSys, 10)}
               />
             </div>
+
+            {/* Clinical Insights added below vitals */}
+            <div className="dashboard-patient-context animate-fade-in" style={{ marginTop: 24, padding: '20px 24px', background: 'var(--bg-card)', borderRadius: 'var(--radius-card)', border: '1px solid var(--border-default)', boxShadow: 'var(--shadow-card)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <h4 className="text-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <AlertTriangle size={14} style={{ color: 'var(--risk-p2)' }} /> Clinical Context & Insights
+                </h4>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                <div style={{ background: 'var(--bg-main)', padding: 16, borderRadius: 12 }}>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Primary Diagnosis</span>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{currentPatient.diagnosis || 'Pending Review'}</p>
+                </div>
+                <div style={{ background: 'var(--bg-main)', padding: 16, borderRadius: 12 }}>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Patient Profile</span>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {currentPatient.age ? `${currentPatient.age} years old` : 'Unknown age'} • {currentPatient.weight ? `${currentPatient.weight} kg` : 'Unknown weight'}
+                  </p>
+                </div>
+              </div>
+              {currentPatient.risk === 'P1' && (
+                <div style={{ marginTop: 16, padding: '12px 16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#DC2626', animation: 'pulse 2s infinite' }} />
+                  <span style={{ fontSize: 13, color: '#DC2626', fontWeight: 500 }}>Critical Status: Requires continuous monitoring. STAT meds pending administration.</span>
+                </div>
+              )}
+            </div>
           </>
+        ) : (
+          <div className="card" style={{ marginTop: 24, padding: 48, textAlign: 'center', color: 'var(--text-muted)', border: '1px dashed var(--border-default)' }}>
+            <Users size={48} style={{ margin: '0 auto 16px', opacity: 0.2 }} />
+            <p>You currently have no patients assigned to you.</p>
+            <p style={{ fontSize: 13, marginTop: 8 }}>When a patient is assigned to your care, their vitals and clinical context will appear here.</p>
+          </div>
         )}
       </div>
     </div>

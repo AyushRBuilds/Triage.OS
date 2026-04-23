@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, Heart, Wind, FileText, User, Calendar, ChevronRight, Search, Filter } from 'lucide-react';
+import { Activity, Heart, Wind, FileText, User, Calendar, ChevronRight, Search, Filter, Info } from 'lucide-react';
 import { getPatients } from '../api/services';
 import { getRiskBadgeClass, getRiskColor } from '../data/mockData';
+import VitalMiniCard from './ui/VitalMiniCard';
 import './PatientDashboard.css';
 
 export default function PatientDashboard() {
@@ -11,6 +12,10 @@ export default function PatientDashboard() {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [riskFilter, setRiskFilter] = useState('all');
+  const [showExpandedVitals, setShowExpandedVitals] = useState(false);
+
+  const generateSparkline = (base, variance, count = 12) =>
+    Array.from({ length: count }, () => base + Math.round((Math.random() - 0.5) * variance * 2));
 
   useEffect(() => {
     async function load() {
@@ -103,8 +108,8 @@ export default function PatientDashboard() {
               </div>
             </div>
             <div className="pd-detail-actions">
-              <button className="btn btn-primary btn-sm" onClick={() => navigate(`/vitals?patient=${selectedPatient.id}`)}>
-                <Activity size={14} /> Vitals
+              <button className={`btn btn-sm ${showExpandedVitals ? 'btn-ghost' : 'btn-primary'}`} onClick={() => setShowExpandedVitals(!showExpandedVitals)}>
+                <Activity size={14} /> {showExpandedVitals ? 'Hide Vitals' : 'Vitals'}
               </button>
               <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/soap-notes?patient=${selectedPatient.id}`)}>
                 <FileText size={14} /> SOAP Notes
@@ -118,48 +123,75 @@ export default function PatientDashboard() {
             <div className="pd-condition-card card">
               <span className="text-label">Diagnosis</span>
               <p className="pd-diagnosis">{selectedPatient.diagnosis}</p>
-              <span className="text-label" style={{ marginTop: 12 }}>Assigned Nurse</span>
-              <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{selectedPatient.assignedNurse}</p>
+              <span className="text-label" style={{ marginTop: 12 }}>Assigned Nurses</span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                {selectedPatient.assignedNurses?.length > 0 ? (
+                  selectedPatient.assignedNurses.map((nurse, idx) => (
+                    <span key={idx} className="badge badge-outline" style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px' }}>
+                      <User size={12} /> {nurse.name}
+                      {nurse.isTemporary && (
+                        <Info size={12} style={{ color: 'var(--blue-primary)' }} title="Assigned temporarily via Shift Swap" />
+                      )}
+                    </span>
+                  ))
+                ) : (
+                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)' }}>None assigned</span>
+                )}
+              </div>
               <span className="text-label" style={{ marginTop: 8 }}>Last Updated</span>
               <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{selectedPatient.lastUpdated}</p>
             </div>
           </div>
 
-          {/* Live Vitals */}
-          <div className="pd-section">
-            <h4 className="pd-section-title">Current Vitals</h4>
-            <div className="pd-vitals-grid">
-              <div className="pd-vital-card card">
-                <span className="text-label">Heart Rate</span>
-                <span className="pd-vital-value" style={{ color: getVitalColor('hr', selectedPatient.vitals.hr) }}>
-                  {selectedPatient.vitals.hr}
-                </span>
-                <span className="text-unit">bpm</span>
-              </div>
-              <div className="pd-vital-card card">
-                <span className="text-label">SpO2</span>
-                <span className="pd-vital-value" style={{ color: getVitalColor('spo2', selectedPatient.vitals.spo2) }}>
-                  {selectedPatient.vitals.spo2}
-                </span>
-                <span className="text-unit">%</span>
-              </div>
-              <div className="pd-vital-card card">
-                <span className="text-label">Blood Pressure</span>
-                <span className="pd-vital-value">{selectedPatient.vitals.bpSys}/{selectedPatient.vitals.bpDia}</span>
-                <span className="text-unit">mmHg</span>
-              </div>
-              <div className="pd-vital-card card">
-                <span className="text-label">Temperature</span>
-                <span className="pd-vital-value">{selectedPatient.vitals.temp || '37.2'}</span>
-                <span className="text-unit">°C</span>
-              </div>
-              <div className="pd-vital-card card">
-                <span className="text-label">Resp. Rate</span>
-                <span className="pd-vital-value">{selectedPatient.vitals.rr || '18'}</span>
-                <span className="text-unit">breaths/min</span>
+          {/* Expanded Vitals Section */}
+          {showExpandedVitals && (
+            <div className="pd-section animate-slide-up" style={{ marginTop: 24, marginBottom: 24 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                <VitalMiniCard
+                  label="HEART RATE"
+                  value={selectedPatient.vitals.hr}
+                  unit="bpm"
+                  type="hr"
+                  sparklineData={generateSparkline(selectedPatient.vitals.hr, 8)}
+                />
+                <VitalMiniCard
+                  label="SPO2"
+                  value={selectedPatient.vitals.spo2}
+                  unit="%"
+                  type="spo2"
+                  sparklineData={generateSparkline(selectedPatient.vitals.spo2, 3)}
+                />
+                <VitalMiniCard
+                  label="BLOOD PRESSURE"
+                  value={`${selectedPatient.vitals.bpSys}/${selectedPatient.vitals.bpDia}`}
+                  unit="mmHg"
+                  type="bpSys"
+                  sparklineData={generateSparkline(selectedPatient.vitals.bpSys, 10)}
+                />
+                <div className="card" style={{ padding: '20px 24px', background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-card)', display: 'flex', flexDirection: 'column' }}>
+                  <span className="text-label" style={{ fontSize: 11, letterSpacing: '0.5px' }}>TEMPERATURE</span>
+                  <div style={{ marginTop: 8 }}>
+                    <span style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-main)' }}>{selectedPatient.vitals.temp || '37.2'}</span>
+                    <span style={{ fontSize: 13, color: 'var(--text-muted)', marginLeft: 4 }}>°C</span>
+                  </div>
+                </div>
+                <div className="card" style={{ padding: '20px 24px', background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-card)', display: 'flex', flexDirection: 'column' }}>
+                  <span className="text-label" style={{ fontSize: 11, letterSpacing: '0.5px' }}>RESPIRATORY RATE</span>
+                  <div style={{ marginTop: 8 }}>
+                    <span style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-main)' }}>{selectedPatient.vitals.rr || '18'}</span>
+                    <span style={{ fontSize: 13, color: 'var(--text-muted)', marginLeft: 4 }}>breaths/min</span>
+                  </div>
+                </div>
+                <div className="card" style={{ padding: '20px 24px', background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-card)', display: 'flex', flexDirection: 'column' }}>
+                  <span className="text-label" style={{ fontSize: 11, letterSpacing: '0.5px' }}>PAIN SCORE</span>
+                  <div style={{ marginTop: 8 }}>
+                    <span style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-main)' }}>{selectedPatient.vitals.pain || '4'}</span>
+                    <span style={{ fontSize: 13, color: 'var(--text-muted)', marginLeft: 4 }}>/10</span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Medications */}
           <div className="pd-section">

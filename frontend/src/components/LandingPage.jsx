@@ -26,11 +26,8 @@ export default function LandingPage() {
       ════════════════════════════════ */}
       <nav className="lp-nav">
         <a className="lp-logo" href="#">
-          <span className="lp-logo-icon">
-            <Activity size={16} strokeWidth={2.5} />
-          </span>
-          <span className="lp-logo-text">
-            Triage<span className="lp-logo-accent">OS</span>
+          <span className="lp-logo-text" style={{ fontWeight: 900, letterSpacing: '-1px', fontSize: '24px' }}>
+            triage<span className="lp-logo-accent">.os</span>
           </span>
         </a>
         <ul className="lp-nav-links">
@@ -40,7 +37,8 @@ export default function LandingPage() {
           <li><a href="#contact">Contact</a></li>
         </ul>
         <div className="lp-nav-actions">
-          <button className="lp-btn-ghost" onClick={() => navigate('/login')}>Log in</button>
+          <button className="lp-btn-ghost" onClick={() => navigate('/login?mode=signin')}>Sign In</button>
+          <button className="lp-btn-lime" style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '13px' }} onClick={() => navigate('/login?mode=signup')}>Sign Up</button>
         </div>
       </nav>
 
@@ -56,7 +54,7 @@ export default function LandingPage() {
           <div className="lp-hero-text">
             <span className="lp-badge">AI HOSPITAL WORKFLOW OS</span>
             <h1 className="lp-h1">
-              triage<span className="lp-h1-accent">.os</span>
+              triage<span className="lp-h1-accent" style={{ color: 'var(--green-primary)' }}>.os</span>
             </h1>
             <p className="lp-tagline">The nervous system of the ward.</p>
             <p className="lp-desc">
@@ -64,7 +62,7 @@ export default function LandingPage() {
               and answers any question from live ward data. 100% local.
             </p>
             <div className="lp-hero-ctas">
-              <button className="lp-btn-lime lp-btn-lg" onClick={() => navigate('/login')}>
+              <button className="lp-btn-lime lp-btn-lg" onClick={() => navigate('/nurse/dashboard')}>
                 Get Started <ArrowRight size={15} />
               </button>
               <button className="lp-btn-outline lp-btn-lg">
@@ -178,7 +176,7 @@ export default function LandingPage() {
           <div className="lp-section-overline">How It Works</div>
           <h2 className="lp-section-title">4 AI Engines. One Nervous System.</h2>
           <p className="lp-section-sub">
-            From spoken voice to structured clinical output — Triage.OS handles the
+            From spoken voice to structured clinical output — triage.os handles the
             complexity so clinicians can focus on what matters.
           </p>
         </div>
@@ -273,7 +271,7 @@ export default function LandingPage() {
             Together, We Can<br />Achieve Optimal<br />Patient Outcomes
           </h2>
           <p className="lp-together-desc">
-            Triage.OS empowers every member of the care team — nurses, doctors, and admins —
+            triage.os empowers every member of the care team — nurses, doctors, and admins —
             with real-time AI insights, all running locally for complete privacy.
           </p>
           <ul className="lp-feature-list">
@@ -324,14 +322,14 @@ export default function LandingPage() {
       ════════════════════════════════ */}
       <section className="lp-testimonial-section">
         <div className="lp-testimonial-left">
-          <h2>What People Are Saying<br />About Triage.OS</h2>
-          <p>From frontline nurses to hospital administrators — hear how Triage.OS has transformed clinical workflows.</p>
+          <h2>What People Are Saying<br />About triage.os</h2>
+          <p>From frontline nurses to hospital administrators — hear how triage.os has transformed clinical workflows.</p>
         </div>
         <div className="lp-testimonial-right">
           <div className="lp-testimonial-card">
             <span className="lp-quote-mark">"</span>
             <p className="lp-quote-text">
-              Triage.OS cut our handoff documentation time by 60%. The AI picks up on urgency
+              triage.os cut our handoff documentation time by 60%. The AI picks up on urgency
               signals that nurses used to have to manually flag. I'm on the road to delivering
               better patient outcomes every single shift.
             </p>
@@ -379,8 +377,9 @@ export default function LandingPage() {
         <div className="lp-footer-top">
           <div className="lp-footer-brand">
             <a className="lp-logo" href="#" style={{ marginBottom: 14, display: 'inline-flex' }}>
-              <span className="lp-logo-icon"><Activity size={15} strokeWidth={2.5} /></span>
-              triage<span className="lp-logo-accent">.os</span>
+              <span className="lp-logo-text" style={{ fontWeight: 900, letterSpacing: '-1px', fontSize: '20px' }}>
+                triage<span className="lp-logo-accent">.os</span>
+              </span>
             </a>
             <p>AI hospital workflow assistant — local, fast, and built for every member of the care team.</p>
             <div className="lp-socials">
@@ -416,7 +415,7 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="lp-footer-bottom">
-          <span>© 2026 Triage.OS . All Rights Reserved.</span>
+          <span>© 2026 triage.os . All Rights Reserved.</span>
           <span>Built with ❤️ for healthcare workers everywhere.</span>
         </div>
       </footer>
