@@ -232,30 +232,3 @@
 .settings-theme-dark .stp-cards div {
   background: #222822;
 }
-
-@media (max-width: 768px) {
-  .settings-layout {
-    flex-direction: column;
-  }
-
-  .settings-tabs {
-    width: 100%;
-    flex-direction: row;
-    overflow-x: auto;
-  }
-}
-
-/* Spinner for save buttons */
-.spin {
-  animation: spin-rotate 1s linear infinite;
-}
-
-@keyframes spin-rotate {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
