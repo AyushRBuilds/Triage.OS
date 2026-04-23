@@ -30,32 +30,24 @@
 }
 
 .fab-voice-soap {
-  position: relative;
+  width: 52px;
   height: 52px;
-  padding: 0 24px;
-  border-radius: 100px;
-  background: var(--green-primary);
-  color: #fff;
+  border-radius: 50%;
+  background: var(--bg-card);
+  color: var(--green-primary);
   display: flex;
   align-items: center;
-  gap: 10px;
-  box-shadow: 0 8px 24px rgba(143,209,79,0.35);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  justify-content: center;
+  box-shadow: var(--shadow-card);
+  border: 1px solid rgba(143, 209, 79, 0.4);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  border: none;
-}
-
-.fab-voice-soap span {
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
 }
 
 .fab-voice-soap:hover {
   transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 12px 32px rgba(143,209,79,0.45);
-  background: #7BC43E;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.1);
+  color: var(--green-primary);
 }
 
 

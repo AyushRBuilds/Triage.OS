@@ -1,11 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Clock, Sun, Moon } from 'lucide-react';
 import './ui.css';
 
 export default function ScheduleCard({ schedule }) {
   const [offset, setOffset] = useState(0);
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const maxDays = schedule?.days?.length || 0;
   const visibleCount = 7;
+
+  const activeIndex = schedule?.days?.findIndex((d) => d.active) ?? -1;
+
+  useEffect(() => {
+    if (activeIndex > -1) {
+      setSelectedDayIndex(activeIndex);
+    }
+  }, [activeIndex]);
 
   const handlePrev = () => setOffset((prev) => Math.max(0, prev - 1));
   const handleNext = () => setOffset((prev) => Math.min(maxDays - visibleCount, prev + 1));
@@ -43,11 +52,16 @@ export default function ScheduleCard({ schedule }) {
       </div>
       <div className="schedule-days">
         {visibleDays.map((d, i) => (
-          <div key={i} className={`schedule-day ${d.active ? 'active' : ''}`}>
+          <button
+            key={i}
+            type="button"
+            className={`schedule-day ${offset + i === selectedDayIndex ? 'active' : ''}`}
+            onClick={() => setSelectedDayIndex(offset + i)}
+          >
             <span className="schedule-day-name">{d.day}</span>
             <span className="schedule-day-date">{d.date}</span>
             {d.tasks > 0 && <span className="schedule-day-tasks">{d.tasks} tasks</span>}
-          </div>
+          </button>
         ))}
       </div>
     </div>

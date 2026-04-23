@@ -6,25 +6,34 @@
 .stat-card {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
+  height: 100%;
 }
 .stat-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 20px;
 }
 .stat-card-icon {
   color: var(--text-muted);
+  flex-shrink: 0;
 }
 .stat-card-value {
   font-size: 36px;
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.5px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
 }
 .stat-card-subtext {
   font-size: 12px;
+  min-height: 32px;
+  display: flex;
+  align-items: flex-start;
 }
 
 /* --- VitalMiniCard --- */
@@ -134,6 +143,9 @@
   min-width: 56px;
   flex: 1;
   flex-shrink: 0;
+  border: none;
+  outline: none;
+  font-family: inherit;
 }
 .schedule-day:hover {
   background: rgba(255,255,255,0.12);

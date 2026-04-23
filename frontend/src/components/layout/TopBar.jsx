@@ -109,6 +109,12 @@ export default function TopBar() {
 
   return (
     <header className="topbar" id="topbar">
+      <button className="topbar-brand" onClick={() => navigate('/')} title="t.os home">
+        <span className="topbar-brand-text">
+          t<span className="topbar-brand-accent">.os</span>
+        </span>
+      </button>
+
       {/* Greeting */}
       <div className="topbar-greeting">
         <h2>Hello, {user?.name === 'Hospital Admin' ? 'Administrator' : (user?.name?.split(' ')[0] || 'User')}! <span className="wave">👋</span></h2>

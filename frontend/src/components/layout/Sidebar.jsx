@@ -2,7 +2,6 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   LayoutDashboard,
-  Activity,
   Mic,
   CheckSquare,
   ArrowLeftRight,
@@ -50,13 +49,6 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar" id="sidebar-nav">
-      {/* Logo */}
-      <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 0' }}>
-        <span style={{ fontWeight: 900, letterSpacing: '-1px', fontSize: '18px', color: 'white' }}>
-          t<span style={{ color: 'var(--green-primary)' }}>.os</span>
-        </span>
-      </div>
-
       {/* Main Nav */}
       <nav className="sidebar-nav">
         {navItems.map((item) => (

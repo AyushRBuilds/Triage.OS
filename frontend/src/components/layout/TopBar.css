@@ -9,6 +9,28 @@
   flex-shrink: 0;
 }
 
+.topbar-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.topbar-brand-text {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.topbar-brand-accent {
+  color: var(--green-primary);
+}
+
 .topbar-greeting h2 {
   font-size: 18px;
   font-weight: 700;
