@@ -57,6 +57,8 @@ const PRIORITY_CONFIG = {
   P1: { label: 'Critical', badge: 'badge-p1' },
   P2: { label: 'Urgent', badge: 'badge-p2' },
   P3: { label: 'Standard', badge: 'badge-p3' },
+  P4: { label: 'Low', badge: 'badge-p4' },
+  P5: { label: 'Stable', badge: 'badge-p5' },
 };
 
 export default function WardOverview() {
