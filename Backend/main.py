@@ -5,13 +5,9 @@ load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import Base, engine
-<<<<<<< HEAD
 from routes import patients, vitals, kanban, soap, chat
-=======
-from routes import patients, vitals, kanban, soap
 from contextlib import asynccontextmanager
 import threading
->>>>>>> a2421dce293544157c5ed3614755fa25ad1f1339
 
 # Configure root logger so all modules (including vitals_simulator) output to console
 logging.basicConfig(
