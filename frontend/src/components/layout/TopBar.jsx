@@ -3,19 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Bell, ChevronDown, User, X, AlertTriangle, Clock, CheckCircle, PenLine, LogOut } from 'lucide-react';
 import FloatingNotes from './FloatingNotes';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import { subscribeToShiftSwaps, confirmShiftSwapTransfer } from '../../api/services';
 import { toast } from '../Toast';
 import { patients } from '../../data/mockData';
 import './TopBar.css';
 
-const NOTIFICATIONS = [
-  { id: 1, type: 'critical', text: 'Mr. Arjun Reddy — SpO2 dropped to 88%', time: '2 min ago' },
-  { id: 2, type: 'stat', text: 'STAT: Meropenem 1g IV due for Bed 9', time: '5 min ago' },
-  { id: 3, type: 'info', text: 'Shift swap request from Deepak Nair', time: '15 min ago' },
-];
-
 export default function TopBar() {
   const { user, logout } = useAuth();
+  const { notifications, clearAll, dismiss } = useNotifications();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
@@ -24,12 +20,10 @@ export default function TopBar() {
   const [showNotes, setShowNotes] = useState(false);
   const [transferConfirm, setTransferConfirm] = useState(null);
   const notesRef = useRef(null);
-  const [dismissedNotifs, setDismissedNotifs] = useState([]);
   const searchRef = useRef(null);
   const profileRef = useRef(null);
   const notifRef = useRef(null);
 
-  const visibleNotifs = NOTIFICATIONS.filter((n) => !dismissedNotifs.includes(n.id));
 
   // Close dropdowns on outside click only
   useEffect(() => {
@@ -78,14 +72,26 @@ export default function TopBar() {
     }
   };
 
-  // Search results
-  const searchResults = searchQuery.trim().length > 0
-    ? patients.filter((p) =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.bed.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.diagnosis?.toLowerCase().includes(searchQuery.toLowerCase())
-      ).slice(0, 5)
-    : [];
+  const [searchResults, setSearchResults] = useState([]);
+
+  // Search results from live DB
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchQuery.trim().length > 0) {
+        const { data, error } = await supabase
+          .from('patients')
+          .select('id, name, bed, ward, risk, initials')
+          .or(`name.ilike.%${searchQuery}%,bed.ilike.%${searchQuery}%,diagnosis.ilike.%${searchQuery}%`)
+          .limit(5);
+        
+        if (!error) setSearchResults(data || []);
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
 
   const handleSearchSelect = (patient) => {
     setSearchQuery('');
@@ -175,8 +181,8 @@ export default function TopBar() {
             onClick={() => setShowNotifs(!showNotifs)}
           >
             <Bell size={20} strokeWidth={1.8} />
-            {visibleNotifs.length > 0 && (
-              <span className="topbar-bell-badge">{visibleNotifs.length}</span>
+            {notifications.length > 0 && (
+              <span className="topbar-bell-badge">{notifications.length}</span>
             )}
           </button>
 
@@ -185,19 +191,29 @@ export default function TopBar() {
             <div className="topbar-notif-dropdown card animate-fade-in">
               <div className="topbar-notif-header">
                 <span className="topbar-notif-title">Notifications</span>
-                {visibleNotifs.length > 0 && (
+                {notifications.length > 0 && (
                   <button
                     className="topbar-notif-clear"
-                    onClick={() => setDismissedNotifs(NOTIFICATIONS.map((n) => n.id))}
+                    onClick={clearAll}
                   >
                     Clear all
                   </button>
                 )}
               </div>
-              {visibleNotifs.length > 0 ? (
+              {notifications.length > 0 ? (
                 <div className="topbar-notif-list">
-                  {visibleNotifs.map((n) => (
-                    <div key={n.id} className={`topbar-notif-item topbar-notif-${n.type}`}>
+                  {notifications.map((n) => (
+                    <div 
+                      key={n.id} 
+                      className={`topbar-notif-item topbar-notif-${n.type}`}
+                      onClick={() => {
+                        if (n.link) {
+                          navigate(n.link);
+                          setShowNotifs(false);
+                        }
+                      }}
+                      style={{ cursor: n.link ? 'pointer' : 'default' }}
+                    >
                       <div className={`topbar-notif-icon topbar-icon-${n.type}`}>
                         {getNotifIcon(n.type)}
                       </div>
@@ -209,7 +225,7 @@ export default function TopBar() {
                         className="topbar-notif-dismiss"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setDismissedNotifs((prev) => [...prev, n.id]);
+                          dismiss(n.id);
                         }}
                       >
                         <X size={12} />
@@ -258,7 +274,17 @@ export default function TopBar() {
       {/* Transfer Confirmation Modal */}
       {transferConfirm && (
         <div className="kanban-modal-backdrop" onClick={() => setTransferConfirm(null)}>
-          <div className="kanban-modal card animate-slide-up" onClick={(e) => e.stopPropagation()} style={{maxWidth: 400}}>
+          <div 
+            className="kanban-modal card animate-slide-up" 
+            onClick={(e) => e.stopPropagation()} 
+            style={{maxWidth: 400}}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleConfirmTransfer();
+              if (e.key === 'Escape') setTransferConfirm(null);
+            }}
+            tabIndex="0"
+            ref={(el) => el && el.focus()}
+          >
             <h4 className="text-card-title" style={{ textAlign: 'center' }}>Confirm Patient Transfer</h4>
             <p className="text-body" style={{ textAlign: 'center', marginBottom: 20 }}>
               <strong>{transferConfirm.responderName}</strong> has accepted your shift request.<br/>

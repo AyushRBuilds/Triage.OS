@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Download, Search, User, Calendar, Activity, ChevronRight, FileDown } from 'lucide-react';
+import { FileText, Download, Search, User, Calendar, Activity, ChevronRight, FileDown, Share2 } from 'lucide-react';
 import { getPatients, getSoapNotesByPatient } from '../api/services';
 import { getRiskBadgeClass } from '../data/mockData';
 import { toast } from './Toast';
@@ -106,6 +106,36 @@ END OF REPORT
     toast.success('Report downloaded successfully');
   };
 
+  const shareReport = async () => {
+    if (!selectedPatient) return;
+    
+    const shareUrl = `${window.location.origin}/share/report/${selectedPatient.id}`;
+    const shareText = `Triage.OS Report for ${selectedPatient.name}\nBed: ${selectedPatient.bed}\nRisk: ${selectedPatient.risk}\nDiagnosis: ${selectedPatient.diagnosis}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Triage.OS - ${selectedPatient.name}`,
+          text: shareText,
+          url: shareUrl
+        });
+        toast.success('Shared successfully');
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          toast.error('Could not share. Please copy manually.');
+        }
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(`${shareText}\n\nLink: ${shareUrl}`);
+        toast.success('Report link copied to clipboard');
+      } catch (err) {
+        toast.error('Share not supported on this browser');
+      }
+    }
+  };
+
   return (
     <div className="pd-page" id="reports-page">
       {/* Left: Patient selection */}
@@ -155,9 +185,14 @@ END OF REPORT
                 <h2 className="pd-detail-name">Report Preview: {selectedPatient.name}</h2>
                 <p className="text-body" style={{ marginTop: 4 }}>Review patient history and clinical notes before downloading.</p>
               </div>
-              <button className="btn btn-primary" onClick={downloadReport}>
-                <Download size={16} /> Download .txt Report
-              </button>
+              <div className="pd-detail-actions" style={{ display: 'flex', gap: 8 }}>
+                <button className="btn btn-primary" onClick={downloadReport}>
+                  <Download size={16} /> Download .txt
+                </button>
+                <button className="btn btn-ghost" onClick={shareReport}>
+                  <Share2 size={16} /> Share
+                </button>
+              </div>
             </div>
 
             <div className="pd-section">

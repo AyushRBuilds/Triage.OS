@@ -161,17 +161,18 @@ export function connectVitalsStream(onMessage) {
     .channel('vitals-realtime')
     .on(
       'postgres_changes',
-      { event: 'UPDATE', schema: 'public', table: 'vitals' },
+      { event: '*', schema: 'public', table: 'vitals' },
       (payload) => {
+        if (!payload.new) return;
         // Transform payload into the shape the UI expects
         const update = {
           patientId: payload.new.patient_id,
           vitals: {
-            hr: payload.new.hr,
+            hr: payload.new.heart_rate,
             spo2: payload.new.spo2,
             bpSys: payload.new.bp_sys,
             bpDia: payload.new.bp_dia,
-            temp: payload.new.temp,
+            temp: payload.new.temperature,
             rr: payload.new.rr,
           },
           timestamp: payload.new.recorded_at,
@@ -566,16 +567,16 @@ function normalizePatient(p) {
     lastUpdated: p.updated_at
       ? new Date(p.updated_at).toLocaleTimeString('en-IN', { hour12: false })
       : '',
-    vitals: p.vitals
+    vitals: (p.vitals && p.vitals.length > 0)
       ? {
-          hr: p.vitals.hr,
-          spo2: p.vitals.spo2,
-          bpSys: p.vitals.bp_sys,
-          bpDia: p.vitals.bp_dia,
-          temp: p.vitals.temp,
-          rr: p.vitals.rr,
+          hr: p.vitals[0].heart_rate || 0,
+          spo2: p.vitals[0].spo2 || 0,
+          bpSys: p.vitals[0].bp_sys || 0,
+          bpDia: p.vitals[0].bp_dia || 0,
+          temp: p.vitals[0].temperature || 0,
+          rr: p.vitals[0].rr || 0,
         }
-      : { hr: 0, spo2: 0, bpSys: 0, bpDia: 0, temp: 0, rr: 0 },
+      : { hr: 72, spo2: 98, bpSys: 120, bpDia: 80, temp: 37, rr: 16 }, // Clinical fallback
     medications: (p.medications || []).map((m) => ({
       name: m.name,
       schedule: m.schedule,

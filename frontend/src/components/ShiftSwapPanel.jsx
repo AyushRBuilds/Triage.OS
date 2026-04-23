@@ -139,7 +139,16 @@ export default function ShiftSwapPanel() {
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
         <div className="kanban-modal-backdrop" onClick={() => setDeleteConfirm(null)}>
-          <div className="kanban-modal card animate-slide-up shift-delete-modal" onClick={(e) => e.stopPropagation()}>
+          <div 
+            className="kanban-modal card animate-slide-up shift-delete-modal" 
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleDelete(deleteConfirm);
+              if (e.key === 'Escape') setDeleteConfirm(null);
+            }}
+            tabIndex="0"
+            ref={(el) => el && el.focus()}
+          >
             <div className="shift-delete-icon">
               <AlertTriangle size={32} />
             </div>

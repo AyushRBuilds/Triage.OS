@@ -65,6 +65,7 @@ export default function KanbanBoard() {
       await deleteTask(taskId);
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
       setDeleteConfirm(null);
+      toast.success('Task deleted successfully');
     } catch (err) {
       console.error('Failed to delete task:', err);
       toast.error('Could not delete task.');
@@ -272,7 +273,17 @@ export default function KanbanBoard() {
 
       {deleteConfirm && (
         <div style={{position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center'}} onClick={() => setDeleteConfirm(null)}>
-          <div className="card animate-fade-in" style={{width: 320, padding: 24, textAlign: 'center', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16}} onClick={(e) => e.stopPropagation()}>
+          <div 
+            className="card animate-fade-in" 
+            style={{width: 320, padding: 24, textAlign: 'center', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16}} 
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleDeleteTask(deleteConfirm);
+              if (e.key === 'Escape') setDeleteConfirm(null);
+            }}
+            tabIndex="0"
+            ref={(el) => el && el.focus()}
+          >
             <div style={{marginBottom: 16, color: '#ef4444', display: 'flex', justifyContent: 'center'}}>
               <AlertTriangle size={48} />
             </div>
