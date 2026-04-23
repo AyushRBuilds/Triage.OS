@@ -390,10 +390,13 @@ export default function LandingPage() {
           </div>
           <div className="lp-footer-col">
             <h4>Quick Menu</h4>
+            <ul>
             <li><a href="#">Home</a></li>
             <li><a href="#features">Features</a></li>
             <li><a href="#modules">Modules</a></li>
             <li><a href="#contact">Contact</a></li>
+
+            </ul>
           </div>
           <div className="lp-footer-col">
             <h4>Support</h4>

@@ -1226,7 +1226,7 @@ section {
 
 .lp-bounty-card {
   background: var(--bg-card, #1a261a);
-  border: 1px solid rgba(255, 255, 255, .08);
+  border: 1.5px solid var(--green-primary);
   border-radius: 18px;
   padding: 28px 30px;
   display: flex;
@@ -1277,21 +1277,23 @@ section {
 ════════════════════════════════════════ */
 .lp-footer {
   background: var(--bg-main);
-  border-top: 1px solid rgba(255, 255, 255, .06);
-  padding: 60px 60px 28px;
+  border-top: 2px solid var(--green-primary);
+  margin-top: 40px;
+
+  padding: 80px 60px 32px;
 }
 
 .lp-footer-top {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 1fr;
-  gap: 50px;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 70px;
   margin-bottom: 48px;
 }
 
 .lp-footer-brand p {
-  font-size: 13.5px;
+  font-size: 15px;
   color: var(--text-secondary);
-  line-height: 1.7;
+  line-height: 1.8;
   max-width: 230px;
   margin-top: 12px;
 }
@@ -1303,8 +1305,8 @@ section {
 }
 
 .lp-social-btn {
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   border-radius: 8px;
   background: rgba(255, 255, 255, .06);
   display: flex;
@@ -1321,7 +1323,7 @@ section {
 }
 
 .lp-footer-col h4 {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 18px;
@@ -1337,8 +1339,8 @@ section {
 }
 
 .lp-footer-col ul li a {
-  font-size: 13px;
-  color: var(--text-secondary);
+  font-size: 14.5px;
+  color: var(--text-primary);
   text-decoration: none;
   transition: color .2s;
 }
@@ -1353,7 +1355,7 @@ section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12.5px;
+  font-size: 13.5px;
   color: var(--text-muted);
 }
 
@@ -1581,7 +1583,7 @@ section {
 .lp-logo-text {
   font-weight: 800;
   letter-spacing: -0.5px;
-  font-size: 20px;
+  font-size: 22px;
 }
 
 .lp-logo-accent {
