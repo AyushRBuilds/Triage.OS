@@ -41,6 +41,33 @@
   margin-bottom: 32px;
 }
 
+.shift-content-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.shift-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.shift-side-col {
+  position: sticky;
+  top: 24px;
+}
+
+@media (max-width: 1024px) {
+  .shift-content-layout {
+    grid-template-columns: 1fr;
+  }
+  .shift-side-col {
+    position: static;
+  }
+}
+
 .shift-cards {
   display: flex;
   flex-direction: column;

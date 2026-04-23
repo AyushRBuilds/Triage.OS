@@ -167,16 +167,25 @@ export default function VoiceAssistant() {
 
   return (
     <>
-      {/* Floating button */}
+      {/* Floating buttons */}
       {!isOpen && (
-        <button
-          className="floating-chat-btn va-btn"
-          onClick={() => setIsOpen(true)}
-          id="voice-assistant-btn"
-        >
-          <Mic size={24} />
-          <span className="floating-chat-pulse" />
-        </button>
+        <div className="fab-container">
+          <button
+            className="fab-chat"
+            onClick={() => setIsOpen(true)}
+            title="tos.ai"
+          >
+            <MessageCircle size={22} />
+          </button>
+
+          <button
+            className="fab-voice-soap"
+            onClick={() => navigate('/soap-notes')}
+          >
+            <Mic size={22} />
+            <span>Voice to SOAP</span>
+          </button>
+        </div>
       )}
 
       {/* Voice Assistant panel */}
@@ -189,7 +198,7 @@ export default function VoiceAssistant() {
                 <Mic size={14} />
               </div>
               <div>
-                <span className="fc-header-title">Voice Assistant</span>
+                <span className="fc-header-title">tos.ai</span>
                 <span className="fc-header-status">
                   {isListening ? (
                     <><span className="pulse-dot pulse-red" style={{ width: 6, height: 6 }} /> Listening...</>
@@ -222,7 +231,7 @@ export default function VoiceAssistant() {
                 <div className="va-welcome-icon">
                   <Mic size={28} />
                 </div>
-                <h4 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Voice Assistant</h4>
+                <h4 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>tos.ai</h4>
                 <p className="text-body" style={{ marginBottom: 16 }}>
                   Tap the mic button or type a command. Try saying:
                 </p>

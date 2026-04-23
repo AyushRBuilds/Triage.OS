@@ -1,30 +1,64 @@
-.floating-chat-btn {
+.fab-container {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  width: 56px;
-  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1000;
+}
+
+.fab-chat {
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  background: var(--green-primary);
+  background: var(--bg-card);
   color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: var(--shadow-card);
+  border: 1px solid rgba(143, 209, 79, 0.4);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.fab-chat:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.1);
+  color: var(--green-primary);
+}
+
+.fab-voice-soap {
+  position: relative;
+  height: 52px;
+  padding: 0 24px;
+  border-radius: 100px;
+  background: var(--green-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   box-shadow: 0 8px 24px rgba(143,209,79,0.35);
-  z-index: 1000;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border: none;
 }
-.floating-chat-btn:hover {
-  transform: scale(1.08);
+
+.fab-voice-soap span {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.fab-voice-soap:hover {
+  transform: translateY(-2px) scale(1.05);
   box-shadow: 0 12px 32px rgba(143,209,79,0.45);
+  background: #7BC43E;
 }
-.floating-chat-pulse {
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
-  border: 2px solid var(--green-primary);
-  animation: pulse-ring 2s ease-out infinite;
-}
+
+
 
 .floating-chat-panel {
   position: fixed;

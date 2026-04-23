@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { GripVertical, Stethoscope, Clock, Plus, X, Calendar, Trash2 } from 'lucide-react';
+import { GripVertical, Stethoscope, Clock, Plus, X, Calendar, Trash2, AlertTriangle } from 'lucide-react';
 import { getTasks, updateTaskStatus, createTask, deleteTask, getPatients } from '../api/services';
+import { toast } from './Toast';
 import './KanbanBoard.css';
 
 const columns = [
@@ -16,6 +17,8 @@ export default function KanbanBoard() {
   const [patientFilter, setPatientFilter] = useState('all');
   const [showAddForm, setShowAddForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -41,9 +44,16 @@ export default function KanbanBoard() {
   const getColumnTasks = (columnId) => filteredTasks.filter((t) => t.status === columnId);
 
   const handleDragEnd = async (result) => {
+    setIsDragging(false);
     if (!result.destination) return;
     const taskId = result.draggableId;
     const newStatus = result.destination.droppableId;
+
+    if (newStatus === 'trash') {
+      setDeleteConfirm(taskId);
+      return;
+    }
+
     setTasks((prev) =>
       prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
     );
@@ -51,13 +61,14 @@ export default function KanbanBoard() {
   };
 
   const handleDeleteTask = async (taskId) => {
-    if (!window.confirm('Delete this task?')) return;
     try {
       await deleteTask(taskId);
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
+      setDeleteConfirm(null);
+      toast.success('Task deleted successfully');
     } catch (err) {
       console.error('Failed to delete task:', err);
-      alert('Could not delete task.');
+      toast.error('Could not delete task.');
     }
   };
 
@@ -86,9 +97,10 @@ export default function KanbanBoard() {
       setTasks((prev) => [taskForUI, ...prev]);
       setNewTask({ title: '', description: '', patientId: '', priority: 'Routine', deadline: '', assignedTo: '' });
       setShowAddForm(false);
+      toast.success('Task created successfully!');
     } catch (err) {
       console.error('Failed to save task:', err);
-      alert('Could not save task. Check Supabase RLS policies.');
+      toast.error('Could not save task. Check Supabase RLS policies.');
     } finally {
       setSaving(false);
     }
@@ -180,7 +192,7 @@ export default function KanbanBoard() {
         </div>
       )}
 
-      <DragDropContext onDragEnd={handleDragEnd}>
+      <DragDropContext onDragEnd={handleDragEnd} onDragStart={() => setIsDragging(true)}>
         <div className="kanban-columns">
           {columns.map((col) => {
             const colTasks = getColumnTasks(col.id);
@@ -210,7 +222,7 @@ export default function KanbanBoard() {
                               <div className="kanban-card-top">
                                 <span className={`badge ${getPriorityBadge(task.priority)}`}>{task.priority}</span>
                                 <div className="kanban-card-actions">
-                                  <button className="kanban-delete-btn" onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }} title="Delete task">
+                                  <button className="kanban-delete-btn" onClick={(e) => { e.stopPropagation(); setDeleteConfirm(task.id); }} title="Delete task">
                                     <Trash2 size={12} />
                                   </button>
                                   <div className="kanban-drag-handle">
@@ -240,7 +252,50 @@ export default function KanbanBoard() {
             );
           })}
         </div>
+
+        {/* Dustbin Dropzone */}
+        <div className="kanban-dustbin-wrapper">
+          <Droppable droppableId="trash">
+            {(provided, snapshot) => (
+              <div
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                className={`kanban-dustbin ${snapshot.isDraggingOver ? 'dragging-over' : ''} ${isDragging ? 'visible' : ''}`}
+              >
+                <Trash2 size={24} />
+                <span>Drop here to delete</span>
+                <div style={{ display: 'none' }}>{provided.placeholder}</div>
+              </div>
+            )}
+          </Droppable>
+        </div>
       </DragDropContext>
+
+      {deleteConfirm && (
+        <div style={{position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center'}} onClick={() => setDeleteConfirm(null)}>
+          <div 
+            className="card animate-fade-in" 
+            style={{width: 320, padding: 24, textAlign: 'center', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16}} 
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleDeleteTask(deleteConfirm);
+              if (e.key === 'Escape') setDeleteConfirm(null);
+            }}
+            tabIndex="0"
+            ref={(el) => el && el.focus()}
+          >
+            <div style={{marginBottom: 16, color: '#ef4444', display: 'flex', justifyContent: 'center'}}>
+              <AlertTriangle size={48} />
+            </div>
+            <h3 style={{marginBottom: 8, fontSize: 18, fontWeight: 600, color: 'var(--text-main)'}}>Delete Task?</h3>
+            <p style={{marginBottom: 24, color: 'var(--text-muted)'}}>This action cannot be undone.</p>
+            <div style={{display: 'flex', gap: 12, justifyContent: 'center'}}>
+              <button className="btn btn-ghost" style={{flex: 1}} onClick={() => setDeleteConfirm(null)}>Cancel</button>
+              <button className="btn btn-primary" style={{flex: 1, background: '#ef4444', borderColor: '#ef4444', color: 'white'}} onClick={() => handleDeleteTask(deleteConfirm)}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,43 +3,45 @@ import {
   Bed, Users, Activity, AlertTriangle, Wrench, Search, UserPlus, LogOut as Discharge,
   X, ChevronDown, Clock, MapPin, Heart, Filter
 } from 'lucide-react';
+import { getPatients, addPatient, deletePatient } from '../api/services';
+import { toast } from './Toast';
 import './WardOverview.css';
 
 const INITIAL_ROOMS = [
   {
     id: '101',
     beds: [
-      { id: '101-A', status: 'available' },
-      { id: '101-B', status: 'occupied', patient: 'Rahul Verma', priority: 'P3', admittedAt: '08:30 AM' },
-      { id: '101-C', status: 'critical', patient: 'Amit Shah', priority: 'P1', admittedAt: '10:30 AM' },
-      { id: '101-D', status: 'occupied', patient: 'Neha Patel', priority: 'P2', admittedAt: '09:15 AM' },
+      { id: 'Bed 1', status: 'available' },
+      { id: 'Bed 2', status: 'available' },
+      { id: 'Bed 3', status: 'available' },
+      { id: 'Bed 4', status: 'available' },
     ],
   },
   {
     id: '102',
     beds: [
-      { id: '102-A', status: 'occupied', patient: 'Vikram Singh', priority: 'P2', admittedAt: '08:45 AM' },
-      { id: '102-B', status: 'available' },
-      { id: '102-C', status: 'occupied', patient: 'Sneha Reddy', priority: 'P3', admittedAt: '11:00 AM' },
-      { id: '102-D', status: 'maintenance' },
+      { id: 'Bed 5', status: 'available' },
+      { id: 'Bed 6', status: 'available' },
+      { id: 'Bed 7', status: 'available' },
+      { id: 'Bed 8', status: 'available' },
     ],
   },
   {
     id: '103',
     beds: [
-      { id: '103-A', status: 'critical', patient: 'John Doe', priority: 'P1', admittedAt: '07:15 AM' },
-      { id: '103-B', status: 'occupied', patient: 'Priya Mehta', priority: 'P2', admittedAt: '06:30 AM' },
-      { id: '103-C', status: 'available' },
-      { id: '103-D', status: 'occupied', patient: 'Arjun Nair', priority: 'P3', admittedAt: '12:00 PM' },
+      { id: 'Bed 9', status: 'available' },
+      { id: 'Bed 10', status: 'available' },
+      { id: 'Bed 11', status: 'available' },
+      { id: 'Bed 12', status: 'available' },
     ],
   },
   {
     id: '104',
     beds: [
-      { id: '104-A', status: 'available' },
-      { id: '104-B', status: 'occupied', patient: 'Karan Malhotra', priority: 'P3', admittedAt: '01:30 PM' },
-      { id: '104-C', status: 'available' },
-      { id: '104-D', status: 'available' },
+      { id: 'Bed 13', status: 'available' },
+      { id: 'Bed 14', status: 'available' },
+      { id: 'Bed 15', status: 'available' },
+      { id: 'Bed 16', status: 'available' },
     ],
   },
 ];
@@ -64,6 +66,37 @@ export default function WardOverview() {
   const [activeBed, setActiveBed] = useState(null); // for modal
   const [admitModal, setAdmitModal] = useState(null); // { roomId, bedId }
   const [admitForm, setAdmitForm] = useState({ name: '', priority: 'P3' });
+
+  // Fetch live patients and map them to the rooms
+  React.useEffect(() => {
+    async function load() {
+      try {
+        const livePatients = await getPatients();
+        setRooms(prevRooms => prevRooms.map(room => ({
+          ...room,
+          beds: room.beds.map(bed => {
+            const livePatient = livePatients.find(p => p.bed === bed.id);
+            if (livePatient) {
+              return {
+                ...bed,
+                status: livePatient.risk === 'P1' ? 'critical' : 'occupied',
+                patient: livePatient.name,
+                priority: livePatient.risk,
+                admittedAt: livePatient.admittedDate || bed.admittedAt,
+                assignedNurses: livePatient.assignedNurses,
+                assignedNurse: livePatient.assignedNurse
+              };
+            }
+            // If no live patient is mapped, ensure it remains available
+            return { ...bed, status: 'available', patient: undefined, priority: undefined, assignedNurses: [] };
+          })
+        })));
+      } catch (err) {
+        console.error('Failed to load live patients for Ward Map:', err);
+      }
+    }
+    load();
+  }, []);
 
   // ── Computed Stats ──
   const stats = useMemo(() => {
@@ -107,21 +140,21 @@ export default function WardOverview() {
   }, [rooms]);
 
   // ── CRUD Actions ──
-  const handleDischarge = (roomId, bedId) => {
-    setRooms((prev) =>
-      prev.map((room) =>
-        room.id === roomId
-          ? {
-              ...room,
-              beds: room.beds.map((bed) =>
-                bed.id === bedId
-                  ? { id: bed.id, status: 'available' }
-                  : bed
-              ),
-            }
-          : room
-      )
-    );
+  const handleDischarge = async (roomId, bedId) => {
+    try {
+      // Find patient by bedId
+      const allPatients = await getPatients();
+      const patient = allPatients.find(p => p.bed === bedId);
+      if (patient) {
+        await deletePatient(patient.id);
+        toast.success(`${patient.name} discharged successfully.`);
+        // Reload to sync UI
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error('Failed to discharge:', err);
+      toast.error('Discharge failed.');
+    }
     setActiveBed(null);
   };
 
@@ -144,29 +177,32 @@ export default function WardOverview() {
     setActiveBed(null);
   };
 
-  const handleAdmit = () => {
+  const handleAdmit = async () => {
     if (!admitForm.name.trim()) return;
     const { roomId, bedId } = admitModal;
-    setRooms((prev) =>
-      prev.map((room) =>
-        room.id === roomId
-          ? {
-              ...room,
-              beds: room.beds.map((bed) =>
-                bed.id === bedId
-                  ? {
-                      ...bed,
-                      status: admitForm.priority === 'P1' ? 'critical' : 'occupied',
-                      patient: admitForm.name,
-                      priority: admitForm.priority,
-                      admittedAt: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-                    }
-                  : bed
-              ),
-            }
-          : room
-      )
-    );
+    
+    try {
+      const payload = {
+        name: admitForm.name,
+        age: 45, // default
+        gender: 'M',
+        bed: bedId,
+        ward: 'General Ward 1',
+        risk: admitForm.priority,
+        diagnosis: 'Admitted via Ward Map',
+        initials: admitForm.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+      };
+      
+      await addPatient(payload);
+      toast.success(`${admitForm.name} admitted to ${bedId}`);
+      
+      // Reload to sync
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (err) {
+      console.error('Admit failed:', err);
+      toast.error('Failed to admit patient.');
+    }
+    
     setAdmitModal(null);
     setAdmitForm({ name: '', priority: 'P3' });
   };
@@ -427,6 +463,24 @@ export default function WardOverview() {
                   </div>
                 </div>
               )}
+              
+              {activeBed.patient && activeBed.assignedNurses && (
+                <div className="wo-modal-detail-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+                  <span className="text-label">Allocated Nurses</span>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {activeBed.assignedNurses.length > 0 ? (
+                      activeBed.assignedNurses.map((n, i) => (
+                        <div key={i} className="badge badge-p5" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px' }}>
+                          <Users size={12} /> {n.name}
+                        </div>
+                      ))
+                    ) : (
+                      <span className="text-body">{activeBed.assignedNurse || 'No nurses assigned'}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="wo-modal-detail-row">
                 <span className="text-label">Status</span>
                 <span className={`badge ${activeBed.status === 'critical' ? 'badge-p1' : activeBed.status === 'maintenance' ? 'badge-p5' : 'badge-p3'}`}>

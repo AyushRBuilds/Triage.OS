@@ -175,6 +175,7 @@
 .admin-action-group {
   display: flex;
   gap: 8px;
+  justify-content: flex-end;
 }
 .admin-delete-btn {
   display: flex;

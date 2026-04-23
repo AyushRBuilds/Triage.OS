@@ -76,7 +76,11 @@ class RawTextPayload(BaseModel):
     raw_text: str
 
 @router.post("/process_raw")
+<<<<<<< HEAD
 def process_raw_text(payload: RawTextPayload):
+=======
+async def process_raw_text(payload: RawTextPayload):
+>>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
     """
     Takes raw clinical text and runs it through the NER and Urgency Classifier.
     Returns the parsed SOAP structured dictionaries WITHOUT saving to the database.
@@ -89,5 +93,12 @@ def process_raw_text(payload: RawTextPayload):
         from ai.soap_pipeline import run_pipeline
         return run_pipeline(payload.raw_text)
     except Exception as e:
+<<<<<<< HEAD
         raise HTTPException(status_code=500, detail=str(e))
+=======
+        import traceback
+        tb = traceback.format_exc()
+        print(tb)
+        raise HTTPException(status_code=500, detail=tb)
+>>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
 

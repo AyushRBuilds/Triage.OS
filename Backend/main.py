@@ -1,7 +1,20 @@
+<<<<<<< HEAD
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import Base, engine
 from routes import patients, vitals, kanban, soap, chat
+=======
+import logging
+from dotenv import load_dotenv
+load_dotenv()
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from database import Base, engine
+from routes import patients, vitals, kanban, soap
+
+logger = logging.getLogger(__name__)
+>>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
 
 # Create DB tables
 Base.metadata.create_all(bind=engine)
@@ -22,7 +35,16 @@ app.include_router(patients.router, prefix="/patients", tags=["Patients"])
 app.include_router(vitals.router,   prefix="/vitals",   tags=["Vitals"])
 app.include_router(kanban.router,   prefix="/kanban",   tags=["Kanban"])
 app.include_router(soap.router,     prefix="/soap",     tags=["SOAP"])
+<<<<<<< HEAD
 app.include_router(chat.router,     prefix="/chat",     tags=["Chat"])
+=======
+
+try:
+    from routes import chat
+    app.include_router(chat.router, prefix="/chat", tags=["Chat"])
+except ImportError as e:
+    logger.warning("RAG chat disabled (missing optional dependency): %s", e)
+>>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
 
 @app.get("/")
 def root():

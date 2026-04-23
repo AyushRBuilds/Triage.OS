@@ -11,27 +11,48 @@ import { supabase } from './supabaseClient';
 // ══════════════════════════════════════════════════════════════
 
 function handleError(error, context) {
-  console.error(`[triage.os] ${context}:`, error.message);
-  throw error;
+  const detail = [error.message, error.details, error.hint].filter(Boolean).join(' — ');
+  console.error(`[triage.os] ${context}:`, detail || error);
+  const err = new Error(detail || error.message || String(error));
+  err.code = error.code;
+  err.original = error;
+  throw err;
 }
 
-// ══════════════════════════════════════════════════════════════
-// AUTH / USER
-// ══════════════════════════════════════════════════════════════
-
-export async function getCurrentNurse() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data, error } = await supabase
-    .from('nurses')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
-  if (error) handleError(error, 'getCurrentNurse');
-  return data;
+/** Normalize patient FK for Supabase (uuid string vs numeric id from <select>). */
+function normalizePatientIdForDb(id) {
+  if (id == null || id === '') return id;
+  if (typeof id === 'number' && !Number.isNaN(id)) return id;
+  const s = String(id).trim();
+  if (/^\d+$/.test(s)) return parseInt(s, 10);
+  return s;
 }
+
+/** Build a row Supabase accepts for `soap_notes` (timestamps, JSON, no undefined). */
+function buildSoapNoteRow(note) {
+  const entities = note.entities;
+  let entitiesJson = [];
+  if (Array.isArray(entities)) entitiesJson = entities;
+  else if (entities && typeof entities === 'object') entitiesJson = entities;
+
+  const row = {
+    patient_id: normalizePatientIdForDb(note.patient_id),
+    subjective: note.subjective ?? null,
+    objective: note.objective ?? null,
+    assessment: note.assessment ?? null,
+    plan: note.plan ?? null,
+    raw_text: note.raw_text ?? null,
+    entities: entitiesJson,
+    urgency_level: note.urgency_level ?? null,
+    recorded_at: note.recorded_at || new Date().toISOString(),
+  };
+  if (note.urgency_confidence != null && note.urgency_confidence !== '') {
+    const n = Number(note.urgency_confidence);
+    if (!Number.isNaN(n)) row.urgency_confidence = n;
+  }
+  return row;
+}
+
 
 // ══════════════════════════════════════════════════════════════
 // PATIENTS
@@ -44,7 +65,12 @@ export async function getPatients() {
       *,
       vitals (*),
       medications (*),
-      assigned_nurse:nurses!assigned_nurse_id (id, name, initials)
+      assigned_nurse:nurses!assigned_nurse_id (id, name, initials),
+      patient_assignments (
+        is_temporary,
+        assigned_at,
+        nurse:nurses (id, name, initials)
+      )
     `)
     .order('risk', { ascending: true });
 
@@ -61,7 +87,12 @@ export async function getPatientById(id) {
       *,
       vitals (*),
       medications (*),
-      assigned_nurse:nurses!assigned_nurse_id (id, name, initials)
+      assigned_nurse:nurses!assigned_nurse_id (id, name, initials),
+      patient_assignments (
+        is_temporary,
+        assigned_at,
+        nurse:nurses (id, name, initials)
+      )
     `)
     .eq('id', id)
     .single();
@@ -110,6 +141,23 @@ export async function reassignPatient(patientId, nurseId) {
   return data;
 }
 
+export async function allocateNurseToPatient(patientId, nurseId, isTemporary = false) {
+  const { data, error } = await supabase
+    .from('patient_assignments')
+    .upsert({ patient_id: patientId, nurse_id: nurseId, is_temporary: isTemporary }, { onConflict: 'patient_id,nurse_id' });
+  if (error) handleError(error, 'allocateNurseToPatient');
+  return data;
+}
+
+export async function unallocateNurseFromPatient(patientId, nurseId) {
+  const { data, error } = await supabase
+    .from('patient_assignments')
+    .delete()
+    .match({ patient_id: patientId, nurse_id: nurseId });
+  if (error) handleError(error, 'unallocateNurseFromPatient');
+  return data;
+}
+
 // ══════════════════════════════════════════════════════════════
 // VITALS — Real-time Supabase Channel
 // Replaces the old setInterval mock.
@@ -121,17 +169,18 @@ export function connectVitalsStream(onMessage) {
     .channel('vitals-realtime')
     .on(
       'postgres_changes',
-      { event: 'UPDATE', schema: 'public', table: 'vitals' },
+      { event: '*', schema: 'public', table: 'vitals' },
       (payload) => {
+        if (!payload.new) return;
         // Transform payload into the shape the UI expects
         const update = {
           patientId: payload.new.patient_id,
           vitals: {
-            hr: payload.new.hr,
+            hr: payload.new.heart_rate,
             spo2: payload.new.spo2,
             bpSys: payload.new.bp_sys,
             bpDia: payload.new.bp_dia,
-            temp: payload.new.temp,
+            temp: payload.new.temperature,
             rr: payload.new.rr,
           },
           timestamp: payload.new.recorded_at,
@@ -247,9 +296,13 @@ export async function getSoapNotesByPatient(patientId) {
 }
 
 export async function createSoapNote(note) {
+  if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+    throw new Error('Supabase is not configured: add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to frontend/.env');
+  }
+  const payload = buildSoapNoteRow(note);
   const { data, error } = await supabase
     .from('soap_notes')
-    .insert([note])
+    .insert([payload])
     .select()
     .single();
 
@@ -336,13 +389,66 @@ export async function getShiftSwapRequests() {
   }));
 }
 
-export async function respondToShiftSwap(requestId, action) {
+export async function respondToShiftSwap(requestId, action, responderId, responderName) {
+  let dbStatus = action;
+  if (action === 'accepted' && responderId) {
+    dbStatus = `accepted|${responderName || 'Colleague'}|${responderId}`;
+    // We NO LONGER transfer patients here. We wait for the requestor to confirm.
+  }
+
   const { data, error } = await supabase
     .from('shift_swap_requests')
-    .update({ status: action }) // action = 'accepted' | 'rejected'
+    .update({ status: dbStatus }) // action = 'accepted|Name|ID' | 'rejected'
     .eq('id', requestId);
 
   if (error) handleError(error, 'respondToShiftSwap');
+  return data;
+}
+
+export async function confirmShiftSwapTransfer(requestId, responderId) {
+  // 1. Get the requestor_id from the request
+  const { data: req } = await supabase.from('shift_swap_requests').select('requestor_id').eq('id', requestId).single();
+  if (!req?.requestor_id) return null;
+  
+  const requestorId = req.requestor_id;
+
+  // 2. Find all patients assigned to the requestor
+  const { data: requestorAssignments } = await supabase
+    .from('patient_assignments')
+    .select('patient_id')
+    .eq('nurse_id', requestorId);
+
+  // 3. Find all patients already assigned to the responder
+  const { data: responderAssignments } = await supabase
+    .from('patient_assignments')
+    .select('patient_id')
+    .eq('nurse_id', responderId);
+
+  const responderPatientIds = new Set((responderAssignments || []).map(a => a.patient_id));
+
+  // 4. Identify patients NOT shared
+  const patientsToTransfer = (requestorAssignments || [])
+    .map(a => a.patient_id)
+    .filter(pid => !responderPatientIds.has(pid));
+
+  // 5. Create temporary assignments for the non-shared patients
+  const newAssignments = patientsToTransfer.map(pid => ({
+    patient_id: pid,
+    nurse_id: responderId,
+    is_temporary: true
+  }));
+
+  if (newAssignments.length > 0) {
+    await supabase.from('patient_assignments').insert(newAssignments);
+  }
+
+  // 6. Mark as finalized
+  const { data, error } = await supabase
+    .from('shift_swap_requests')
+    .update({ status: 'finalized' })
+    .eq('id', requestId);
+    
+  if (error) handleError(error, 'confirmShiftSwapTransfer');
   return data;
 }
 
@@ -429,6 +535,30 @@ export async function getDashboardStats() {
 
 function normalizePatient(p) {
   if (!p) return null;
+  
+  // Handle new assignment logic & 24hr expiration
+  const now = new Date().getTime();
+  const validAssignments = (p.patient_assignments || []).filter(a => {
+    if (a.is_temporary) {
+      const assignedTime = new Date(a.assigned_at).getTime();
+      // Drop temporary assignments older than 24 hours
+      if (now - assignedTime > 24 * 60 * 60 * 1000) return false;
+    }
+    return true;
+  });
+
+  const assignedNurses = validAssignments.map(a => ({
+    id: a.nurse?.id,
+    name: a.nurse?.name,
+    initials: a.nurse?.initials,
+    isTemporary: a.is_temporary
+  }));
+
+  // Fallback string for legacy UI components
+  const primaryNurseName = assignedNurses.length > 0 
+    ? assignedNurses.map(n => n.name).join(', ') 
+    : (p.assigned_nurse?.name || '');
+
   return {
     id: p.id,
     name: p.name,
@@ -439,21 +569,22 @@ function normalizePatient(p) {
     risk: p.risk,
     initials: p.initials,
     diagnosis: p.diagnosis,
-    assignedNurse: p.assigned_nurse?.name || '',
+    assignedNurse: primaryNurseName,
+    assignedNurses: assignedNurses,
     admittedDate: p.admitted_date,
     lastUpdated: p.updated_at
       ? new Date(p.updated_at).toLocaleTimeString('en-IN', { hour12: false })
       : '',
-    vitals: p.vitals
+    vitals: (p.vitals && p.vitals.length > 0)
       ? {
-          hr: p.vitals.hr,
-          spo2: p.vitals.spo2,
-          bpSys: p.vitals.bp_sys,
-          bpDia: p.vitals.bp_dia,
-          temp: p.vitals.temp,
-          rr: p.vitals.rr,
+          hr: p.vitals[0].heart_rate || 0,
+          spo2: p.vitals[0].spo2 || 0,
+          bpSys: p.vitals[0].bp_sys || 0,
+          bpDia: p.vitals[0].bp_dia || 0,
+          temp: p.vitals[0].temperature || 0,
+          rr: p.vitals[0].rr || 0,
         }
-      : { hr: 0, spo2: 0, bpSys: 0, bpDia: 0, temp: 0, rr: 0 },
+      : { hr: 72, spo2: 98, bpSys: 120, bpDia: 80, temp: 37, rr: 16 }, // Clinical fallback
     medications: (p.medications || []).map((m) => ({
       name: m.name,
       schedule: m.schedule,

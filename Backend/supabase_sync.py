@@ -32,12 +32,20 @@ def sync_vitals_to_supabase(patient_id, vitals_data):
     
     payload = {
         "patient_id": patient_id,
+<<<<<<< HEAD
         "hr": vitals_data.get("heart_rate"),
         "bp_sys": vitals_data.get("blood_pressure_sys"),
         "bp_dia": vitals_data.get("blood_pressure_dia"),
         "spo2": vitals_data.get("spo2"),
         "temp": vitals_data.get("temperature"),
         "risk_score": vitals_data.get("risk_score"),
+=======
+        "heart_rate": vitals_data.get("heart_rate"),
+        "bp_sys": vitals_data.get("blood_pressure_sys"),
+        "bp_dia": vitals_data.get("blood_pressure_dia"),
+        "spo2": vitals_data.get("spo2"),
+        "temperature": vitals_data.get("temperature"),
+>>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
         "recorded_at": "now()",
     }
     

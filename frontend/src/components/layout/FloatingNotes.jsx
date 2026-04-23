@@ -4,13 +4,14 @@ import {
   Bold, Italic, List, Mic, MicOff, ChevronDown, Check, AlertCircle,
   Clock, User, RotateCcw, Filter
 } from 'lucide-react';
+import { toast } from '../Toast';
 import { patients as mockPatients } from '../../data/mockData';
 import './FloatingNotes.css';
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const CATEGORIES = ['All', 'Medication', 'Urgent', 'Observation', 'Vitals', 'General'];
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
-const NOTE_COLORS = ['#ffffff', '#f0fdf4', '#fefce8', '#fff7ed', '#fdf2f8', '#eff6ff'];
+const NOTE_COLORS = ['#ffffff', '#dcfce7', '#fef9c3', '#ffedd5', '#fce7f3', '#dbeafe'];
 
 const PRIORITY_META = {
   Low:      { color: '#6b7280', bg: '#f3f4f6' },
@@ -39,26 +40,125 @@ const SEED_NOTES = [
   },
 ];
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-function useLocalNotes() {
-  const [notes, setNotes] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('nurse_notes') || 'null') || SEED_NOTES; }
-    catch { return SEED_NOTES; }
-  });
+// ── Database Layer ────────────────────────────────────────────────────────
+import { supabase } from '../../api/supabaseClient';
+import { useAuth } from '../../contexts/AuthContext';
 
-  const persist = (next) => {
-    setNotes(next);
-    localStorage.setItem('nurse_notes', JSON.stringify(next));
+function useDbNotes() {
+  const { user } = useAuth();
+  const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Robust ID selection: prioritize id, then uid, then email
+  const nurseId = user?.id || user?.uid || user?.email;
+
+  const fetchNotes = useCallback(async () => {
+    if (!nurseId) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('personal_notes')
+        .select('*')
+        .eq('nurse_id', nurseId)
+        .order('is_pinned', { ascending: false })
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setNotes(data.map(n => ({
+        ...n,
+        patientName: n.patient_name,
+        pinned: n.is_pinned,
+        updatedAt: new Date(n.created_at).toLocaleTimeString()
+      })));
+    } catch (err) {
+      console.error('Failed to fetch notes:', err);
+      // Don't toast on fetch to avoid spam, but log it
+    } finally {
+      setLoading(false);
+    }
+  }, [nurseId]);
+
+  useEffect(() => {
+    fetchNotes();
+  }, [fetchNotes]);
+
+  const addNote = async (note) => {
+    if (!nurseId) {
+      toast.error('Session expired. Please logout and login again.');
+      return;
+    }
+    try {
+      const { error } = await supabase
+        .from('personal_notes')
+        .insert([{
+          nurse_id: nurseId,
+          title: note.title,
+          content: note.content,
+          category: note.category,
+          priority: note.priority,
+          color: note.color,
+          patient_name: note.patientName,
+          is_pinned: false
+        }]);
+      
+      if (error) throw error;
+      toast.success('Note saved to database!');
+      fetchNotes();
+    } catch (err) {
+      console.error('Save failed:', err);
+      toast.error(`Failed to save: ${err.message}`);
+    }
   };
 
-  const addNote = (note) => persist([note, ...notes]);
-  const updateNote = (id, patch) => persist(notes.map(n => n.id === id ? { ...n, ...patch, updatedAt: now() } : n));
-  const softDelete = (id) => persist(notes.map(n => n.id === id ? { ...n, deleted: true } : n));
-  const hardDelete = (id) => persist(notes.filter(n => n.id !== id));
-  const restoreNote = (id) => persist(notes.map(n => n.id === id ? { ...n, deleted: false } : n));
-  const togglePin = (id) => persist(notes.map(n => n.id === id ? { ...n, pinned: !n.pinned, updatedAt: now() } : n));
+  const updateNote = async (id, patch) => {
+    try {
+      const { error } = await supabase
+        .from('personal_notes')
+        .update({
+          title: patch.title,
+          content: patch.content,
+          category: patch.category,
+          priority: patch.priority,
+          color: patch.color,
+          patient_name: patch.patientName,
+          is_pinned: patch.pinned
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      fetchNotes();
+    } catch (err) {
+      toast.error('Failed to update note.');
+    }
+  };
 
-  return { notes, addNote, updateNote, softDelete, hardDelete, restoreNote, togglePin };
+  const hardDelete = async (id) => {
+    try {
+      const { error } = await supabase.from('personal_notes').delete().eq('id', id);
+      if (error) throw error;
+      toast.success('Note deleted successfully.');
+      fetchNotes();
+    } catch (err) {
+      toast.error('Failed to delete note.');
+    }
+  };
+
+  const togglePin = async (id) => {
+    const note = notes.find(n => n.id === id);
+    try {
+      const { error } = await supabase
+        .from('personal_notes')
+        .update({ is_pinned: !note.pinned })
+        .eq('id', id);
+      
+      if (error) throw error;
+      fetchNotes();
+    } catch (err) {
+      toast.error('Failed to pin note.');
+    }
+  };
+
+  return { notes, loading, addNote, updateNote, hardDelete, togglePin, fetchNotes };
 }
 
 // ── Rich‑text mini toolbar ─────────────────────────────────────────────────
@@ -110,7 +210,7 @@ function NoteEditor({ initial, onSave, onCancel, linkedPatientName }) {
   // Voice-to-text
   const toggleVoice = () => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) return alert('Speech recognition not supported. Use Chrome.');
+    if (!SR) return toast.error('Speech recognition not supported. Use Chrome.');
     if (isListening) { recognitionRef.current?.stop(); return; }
     const r = new SR();
     r.lang = 'en-US'; r.interimResults = false;
@@ -203,21 +303,9 @@ function NoteEditor({ initial, onSave, onCancel, linkedPatientName }) {
 }
 
 // ── Single note card ───────────────────────────────────────────────────────
-function NoteCard({ note, onEdit, onDelete, onPin, onRestore }) {
+function NoteCard({ note, onEdit, onDelete, onPin }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const pm = PRIORITY_META[note.priority] || PRIORITY_META.Medium;
-
-  if (note.deleted) {
-    return (
-      <div className="fn-note-card fn-deleted">
-        <span className="fn-note-title">{note.title}</span>
-        <div className="fn-note-deleted-actions">
-          <button className="fn-btn-ghost" onClick={() => onRestore(note.id)}><RotateCcw size={12}/> Restore</button>
-          <button className="fn-btn-danger-sm" onClick={() => onDelete(note.id, true)}><Trash2 size={12}/> Remove</button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="fn-note-card" style={{ background: note.color || '#fff' }}>
@@ -231,7 +319,7 @@ function NoteCard({ note, onEdit, onDelete, onPin, onRestore }) {
           </button>
           <button className="fn-icon-btn" title="Edit" onClick={() => onEdit(note)}><Edit3 size={13}/></button>
           {confirmDelete
-            ? <button className="fn-icon-btn fn-confirm-del" onClick={() => onDelete(note.id, false)}><Check size={13}/> Confirm</button>
+            ? <button className="fn-icon-btn fn-confirm-del" onClick={() => onDelete(note.id)}><Check size={13}/> Confirm</button>
             : <button className="fn-icon-btn" title="Delete" onClick={() => setConfirmDelete(true)}><Trash2 size={13}/></button>
           }
         </div>
@@ -264,21 +352,20 @@ export default function FloatingNotes({ linkedPatientName = null, isInline = fal
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState('All');
   const [filterPri, setFilterPri] = useState('All');
-  const [showDeleted, setShowDeleted] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
-  const { notes, addNote, updateNote, softDelete, hardDelete, restoreNote, togglePin } = useLocalNotes();
+  const { notes, addNote, updateNote, hardDelete, togglePin } = useDbNotes();
 
   const handleSave = (data) => {
     if (editing && editing.id) {
       updateNote(editing.id, data);
     } else {
-      addNote({ id: uid(), ...data, pinned: false, deleted: false, createdAt: now(), updatedAt: now() });
+      addNote({ ...data });
     }
     setEditing(null);
   };
 
-  const handleDelete = (id, hard) => hard ? hardDelete(id) : softDelete(id);
+  const handleDelete = (id) => hardDelete(id);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -287,7 +374,6 @@ export default function FloatingNotes({ linkedPatientName = null, isInline = fal
   };
 
   const visible = notes.filter(n => {
-    if (n.deleted !== showDeleted) return false;
     if (filterCat !== 'All' && n.category !== filterCat) return false;
     if (filterPri !== 'All' && n.priority !== filterPri) return false;
     if (search) {
@@ -305,7 +391,7 @@ export default function FloatingNotes({ linkedPatientName = null, isInline = fal
         <div className="fn-header">
           <div className="fn-header-left">
             <PenLine size={16}/>
-            <span>Nurse Notes</span>
+            <span>Notes</span>
             <span className="fn-count">{visible.length}</span>
           </div>
           <div className="fn-header-actions">
@@ -329,10 +415,6 @@ export default function FloatingNotes({ linkedPatientName = null, isInline = fal
               <option value="All">All Priorities</option>
               {PRIORITIES.map(p => <option key={p}>{p}</option>)}
             </select>
-            <button className={`fn-select-sm ${showDeleted ? 'fn-active-filter' : ''}`}
-              onClick={() => setShowDeleted(!showDeleted)}>
-              {showDeleted ? 'Active' : 'Trash'}
-            </button>
           </div>
         )}
         <div className="fn-search-bar">
@@ -354,7 +436,7 @@ export default function FloatingNotes({ linkedPatientName = null, isInline = fal
               )}
               {visible.map(note => (
                 <NoteCard key={note.id} note={note} onEdit={n => setEditing(n)}
-                  onDelete={handleDelete} onPin={togglePin} onRestore={restoreNote} />
+                  onDelete={handleDelete} onPin={togglePin} />
               ))}
             </div>
           )}
@@ -379,7 +461,7 @@ export default function FloatingNotes({ linkedPatientName = null, isInline = fal
           <div className="fn-header">
             <div className="fn-header-left">
               <PenLine size={16}/>
-              <span>Nurse Notes</span>
+              <span>Notes</span>
               <span className="fn-count">{visible.length}</span>
             </div>
             <div className="fn-header-actions">
@@ -405,10 +487,6 @@ export default function FloatingNotes({ linkedPatientName = null, isInline = fal
                 <option value="All">All Priorities</option>
                 {PRIORITIES.map(p => <option key={p}>{p}</option>)}
               </select>
-              <button className={`fn-select-sm ${showDeleted ? 'fn-active-filter' : ''}`}
-                onClick={() => setShowDeleted(!showDeleted)}>
-                {showDeleted ? 'Active' : 'Trash'}
-              </button>
             </div>
           )}
 
@@ -448,7 +526,6 @@ export default function FloatingNotes({ linkedPatientName = null, isInline = fal
                     onEdit={n => setEditing(n)}
                     onDelete={handleDelete}
                     onPin={togglePin}
-                    onRestore={restoreNote}
                   />
                 ))}
               </div>

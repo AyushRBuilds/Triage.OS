@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   LayoutDashboard,
@@ -6,13 +6,12 @@ import {
   Mic,
   CheckSquare,
   ArrowLeftRight,
-  Shield,
   Settings,
-  LogOut,
   Users,
   ClipboardList,
   BarChart3,
   Map,
+  LogOut,
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -20,8 +19,7 @@ const roleNavItems = {
   nurse: [
     { to: '/nurse/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/patients', icon: Users, label: 'Patients' },
-    { to: '/ward-overview', icon: Map, label: 'Ward Overview' },
-    { to: '/vitals', icon: Activity, label: 'Vitals' },
+
     { to: '/soap-notes', icon: Mic, label: 'SOAP Notes' },
     { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
     { to: '/shift-swap', icon: ArrowLeftRight, label: 'Shift Swap' },
@@ -29,11 +27,10 @@ const roleNavItems = {
   doctor: [
     { to: '/doctor/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/patients', icon: Users, label: 'Patients' },
-    { to: '/ward-overview', icon: Map, label: 'Ward Overview' },
-    { to: '/vitals', icon: Activity, label: 'Vitals' },
+
     { to: '/soap-notes', icon: Mic, label: 'SOAP Notes' },
     { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
-    { to: '/shift-swap', icon: ArrowLeftRight, label: 'Shift Swap' },
+    { to: '/admin/reports', icon: BarChart3, label: 'Reports' },
   ],
   admin: [
     { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -47,16 +44,17 @@ const roleNavItems = {
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const role = user?.role || 'nurse';
   const navItems = roleNavItems[role] || roleNavItems.nurse;
 
   return (
     <aside className="sidebar" id="sidebar-nav">
       {/* Logo */}
-      <div className="sidebar-logo">
-        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-          <path d="M16 6v20M6 16h20" stroke="#8FD14F" strokeWidth="3.5" strokeLinecap="round" />
-        </svg>
+      <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 0' }}>
+        <span style={{ fontWeight: 900, letterSpacing: '-1px', fontSize: '18px', color: 'white' }}>
+          t<span style={{ color: 'var(--green-primary)' }}>.os</span>
+        </span>
       </div>
 
       {/* Main Nav */}
@@ -78,6 +76,14 @@ export default function Sidebar() {
 
       {/* Bottom Nav */}
       <div className="sidebar-bottom">
+        <button
+          className="sidebar-item"
+          title="Sign Out"
+          onClick={() => { logout(); navigate('/login'); }}
+          style={{ background: 'transparent', border: 'none', cursor: 'pointer', outline: 'none', padding: 0 }}
+        >
+          <LogOut size={22} strokeWidth={1.8} />
+        </button>
         <NavLink
           to="/settings"
           className={({ isActive }) =>
@@ -88,10 +94,6 @@ export default function Sidebar() {
           <span className="sidebar-indicator" />
           <Settings size={22} strokeWidth={1.8} />
         </NavLink>
-        <button className="sidebar-item sidebar-logout" title="Logout" onClick={async () => { await logout(); }}>
-          <span className="sidebar-indicator" />
-          <LogOut size={22} strokeWidth={1.8} />
-        </button>
       </div>
     </aside>
   );

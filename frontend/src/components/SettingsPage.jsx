@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import { supabase } from '../api/supabaseClient';
-import { User, Bell, Palette, Lock, Save, Check, Loader } from 'lucide-react';
+import { User, Bell, Palette, Lock, Save, Check, Loader, Database, AlertTriangle } from 'lucide-react';
+import { toast } from './Toast';
+import { resetDatabaseToSeed } from '../api/seedDatabase';
 import './SettingsPage.css';
 
 export default function SettingsPage() {
   const { user, updateUser } = useAuth();
+  const { preferences: notifications, setPreferences: setNotifications } = useNotifications();
   const [activeTab, setActiveTab] = useState('profile');
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState({
@@ -15,42 +19,11 @@ export default function SettingsPage() {
     ward: user?.ward || '',
     phone: user?.phone || '+91 98765 43210',
   });
-  const [notifications, setNotifications] = useState({
-    criticalAlerts: true,
-    statMeds: true,
-    shiftSwaps: true,
-    soapNotes: false,
-    emailDigest: false,
-  });
   const [theme, setTheme] = useState('light');
   const [passwords, setPasswords] = useState({ current: '', newPw: '', confirm: '' });
   const [saveMsg, setSaveMsg] = useState('');
+  const [confirmReset, setConfirmReset] = useState(false);
 
-  // Load notification preferences from Supabase on mount
-  useEffect(() => {
-    async function loadPrefs() {
-      try {
-        const { data } = await supabase
-          .from('user_preferences')
-          .select('*')
-          .eq('user_id', user?.email)
-          .single();
-        if (data) {
-          setNotifications({
-            criticalAlerts: data.critical_alerts ?? true,
-            statMeds: data.stat_meds ?? true,
-            shiftSwaps: data.shift_swaps ?? true,
-            soapNotes: data.soap_notes ?? false,
-            emailDigest: data.email_digest ?? false,
-          });
-        }
-      } catch (err) {
-        // Table may not exist yet — use defaults
-        console.warn('Could not load notification prefs:', err.message);
-      }
-    }
-    if (user?.email) loadPrefs();
-  }, [user?.email]);
 
   // Save profile to Supabase
   const handleSaveProfile = async () => {
@@ -89,12 +62,12 @@ export default function SettingsPage() {
     if (key === 'criticalAlerts' && newVal && 'Notification' in window) {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
-        new Notification('Triage.OS', {
+        new Notification('triage.os', {
           body: 'Critical patient alerts are now enabled!',
           icon: '🏥',
         });
-      } else if (permission === 'denied') {
-        alert('Browser notifications are blocked. Please enable them in your browser settings.');
+      } else {
+        toast.warning('Browser notifications are blocked. Please enable them in your browser settings.');
       }
     }
   };
@@ -135,7 +108,26 @@ export default function SettingsPage() {
     { key: 'notifications', label: 'Notifications', icon: Bell },
     { key: 'appearance', label: 'Appearance', icon: Palette },
     { key: 'security', label: 'Security', icon: Lock },
+    ...(user?.role === 'admin' || user?.name === 'Hospital Admin' ? [{ key: 'system', label: 'System', icon: Database }] : []),
   ];
+
+  const handleResetDatabase = async () => {
+    if (!confirmReset) {
+      setConfirmReset(true);
+      setTimeout(() => setConfirmReset(false), 3000);
+      return;
+    }
+    setSaving(true);
+    setConfirmReset(false);
+    const { success, error } = await resetDatabaseToSeed();
+    setSaving(false);
+    if (success) {
+      toast.success("Database has been reset to original seed data!");
+      setTimeout(() => window.location.reload(), 1500);
+    } else {
+      toast.error(`Database reset failed: ${error?.message || 'Unknown error'}`);
+    }
+  };
 
   return (
     <div className="settings-page" id="settings-page">
@@ -294,6 +286,33 @@ export default function SettingsPage() {
                 <button className="btn btn-primary" onClick={() => handleSaveGeneric('Password')}>
                   <Lock size={14} /> Update Password
                 </button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'system' && (
+            <div className="settings-section animate-fade-in">
+              <h4 className="text-card-title">System Administration</h4>
+              <p className="text-body" style={{ marginBottom: 20 }}>Manage database and system-level configuration.</p>
+              
+              <div className="settings-form-grid" style={{ maxWidth: 500 }}>
+                <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: 16 }}>
+                  <h5 style={{ color: '#DC2626', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, fontSize: 14 }}>
+                    <AlertTriangle size={16} /> Factory Reset
+                  </h5>
+                  <p style={{ fontSize: 13, color: '#991B1B', marginBottom: 16, lineHeight: 1.5 }}>
+                    This will permanently delete all current data and restore the original seed data (patients, nurses, assignments, tasks, etc). This action cannot be undone.
+                  </p>
+                  <button 
+                    className="btn" 
+                    style={{ background: '#DC2626', color: 'white', border: 'none', padding: '10px 16px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+                    onClick={handleResetDatabase}
+                    disabled={saving}
+                  >
+                    {saving ? <Loader size={16} className="spin" /> : <Database size={16} />}
+                    {saving ? 'Resetting Database...' : confirmReset ? 'Are you sure? Click again' : 'Reset Database to Default Seed'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
