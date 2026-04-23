@@ -62,7 +62,7 @@ export default function SettingsPage() {
     if (key === 'criticalAlerts' && newVal && 'Notification' in window) {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
-        new Notification('triage.os', {
+        new Notification('t.os', {
           body: 'Critical patient alerts are now enabled!',
           icon: '🏥',
         });

@@ -60,7 +60,9 @@
   padding: 16px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
+  align-items: stretch;
+  min-height: 140px;
 }
 
 /* Section Headers */

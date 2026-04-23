@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, AlertTriangle, Pill, UserCheck, MoreHorizontal, Clock, ChevronRight } from 'lucide-react';
+import { Users, AlertTriangle, Pill, UserCheck, Clock, ChevronRight, Stethoscope, HeartPulse, UserCircle2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getDashboardStats, getScheduleData, getTasks, getPatients } from '../../api/services';
 import { useSimulatedVitals } from '../../hooks/useSimulatedVitals';
@@ -85,7 +85,6 @@ export default function NurseDashboard() {
               <span className="pulse-dot" /> Live
             </span>
           )}
-          <button className="more-btn"><MoreHorizontal size={18} /></button>
         </div>
 
         {/* Patient list */}
@@ -171,24 +170,25 @@ export default function NurseDashboard() {
                   <AlertTriangle size={14} style={{ color: 'var(--risk-p2)' }} /> Clinical Context & Insights
                 </h4>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                <div style={{ background: 'var(--bg-main)', padding: 16, borderRadius: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 14 }}>
+                <div style={{ background: 'var(--bg-main)', padding: 16, borderRadius: 12, border: '1px solid var(--border-default)' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}><Stethoscope size={12} /> Diagnosis</span>
                   <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Primary Diagnosis</span>
                   <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{currentPatient.diagnosis || 'Pending Review'}</p>
                 </div>
-                <div style={{ background: 'var(--bg-main)', padding: 16, borderRadius: 12 }}>
+                <div style={{ background: 'var(--bg-main)', padding: 16, borderRadius: 12, border: '1px solid var(--border-default)' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}><UserCircle2 size={12} /> Profile</span>
                   <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Patient Profile</span>
                   <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
                     {currentPatient.age ? `${currentPatient.age} years old` : 'Unknown age'} • {currentPatient.weight ? `${currentPatient.weight} kg` : 'Unknown weight'}
                   </p>
                 </div>
-              </div>
-              {currentPatient.risk === 'P1' && (
-                <div style={{ marginTop: 16, padding: '12px 16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, display: 'flex', gap: 12, alignItems: 'center' }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#DC2626', animation: 'pulse 2s infinite' }} />
-                  <span style={{ fontSize: 13, color: '#DC2626', fontWeight: 500 }}>Critical Status: Requires continuous monitoring. STAT meds pending administration.</span>
+                <div style={{ background: 'var(--bg-main)', padding: 16, borderRadius: 12, border: '1px solid var(--border-default)' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}><HeartPulse size={12} /> Clinical Priority</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Current Priority</span>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{currentPatient.risk || 'P3'} • Monitoring in progress</p>
                 </div>
-              )}
+              </div>
             </div>
           </>
         ) : (

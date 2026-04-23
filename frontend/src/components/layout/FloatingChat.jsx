@@ -165,6 +165,12 @@ export default function VoiceAssistant() {
     }
   };
 
+  useEffect(() => {
+    if (isOpen && !isListening) {
+      startListening();
+    }
+  }, [isOpen, isListening, startListening]);
+
   return (
     <>
       {/* Floating buttons */}
@@ -180,10 +186,10 @@ export default function VoiceAssistant() {
 
           <button
             className="fab-voice-soap"
+            title="Voice to SOAP"
             onClick={() => navigate('/soap-notes')}
           >
             <Mic size={22} />
-            <span>Voice to SOAP</span>
           </button>
         </div>
       )}
