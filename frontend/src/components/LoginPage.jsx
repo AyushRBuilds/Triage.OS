@@ -132,7 +132,7 @@ export default function LoginPage() {
       <div className="login-container card animate-fade-in">
         <div className="login-header">
           <div className="login-logo">
-            <h2 style={{ fontWeight: 900, letterSpacing: '-1px', fontSize: '32px' }}>triage<span style={{ color: 'var(--green-primary)' }}>.os</span></h2>
+            <h2 style={{ fontWeight: 900, letterSpacing: '-1.5px', fontSize: '32px' }}>t<span style={{ color: 'var(--green-primary)' }}>.os</span></h2>
           </div>
           <p className="text-body">{isSignUp ? 'Create your account' : 'Sign in to your account'}</p>
         </div>
