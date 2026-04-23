@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { FileText as Note } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { Mic, MicOff, Save, Trash2, Clock, ChevronDown, FileText, Plus, Edit3, X, Zap, AlertTriangle, Activity, Pill, Stethoscope, Brain, Loader2, Check } from 'lucide-react';
 import { getSoapNotes, createSoapNote, deleteSoapNote, getPatients } from '../api/services';
@@ -132,7 +133,7 @@ export default function SOAPNoteViewer() {
     recognition.onend = () => {
       // If still supposed to be recording, restart (browser stops after silence)
       if (recognitionRef.current && isRecording) {
-        try { recognition.start(); } catch(e) { /* ignore */ }
+        try { recognition.start(); } catch (e) { /* ignore */ }
       }
     };
 
@@ -155,7 +156,7 @@ export default function SOAPNoteViewer() {
       if (!res.ok) throw new Error(`Pipeline failed: ${res.status}`);
       const result = await res.json();
       const fullResult = { ...result, raw_text: text };
-      
+
       sessionStorage.setItem('soap_aiResult', JSON.stringify(fullResult));
       sessionStorage.removeItem('soap_processing');
       setShowManualInput(false);
@@ -332,6 +333,21 @@ export default function SOAPNoteViewer() {
 
   return (
     <div className="soap-page" id="soap-notes-page">
+      <div className="page-header card">
+        <div>
+          <h3 className="page-title"><Note size={24} /> SOAP Notes</h3>
+          <p className="page-desc">
+            View patient records, AI-generated notes, and edit or create new SOAP notes.
+          </p>
+        </div>
+        <button
+          className="btn btn-primary"
+          onClick={() => { setShowAddForm(true); setEditingNote(null); setAiResult(null); }}
+        >
+          <Plus size={20} /> Create SOAP Note
+        </button>
+      </div>
+
       {/* Left panel — Notes list */}
       <div className="soap-left">
         <div className="soap-left-header">
@@ -553,9 +569,9 @@ export default function SOAPNoteViewer() {
           </div>
         ) : (
           /* ── Voice Recording Panel ── */
-          <div className="soap-voice-card">
+          < div className="soap-voice-card card">
             <h3 className="text-section-title" style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-              <Mic size={18} style={{ color: 'var(--green-primary)' }}/> Voice Recording
+              <Mic size={18} style={{ color: 'var(--green-primary)' }} /> Voice Recording
             </h3>
             <p className="text-body" style={{ marginBottom: 40, textAlign: 'center', maxWidth: 420, margin: '0 auto 40px auto', lineHeight: 1.6 }}>
               Tap the microphone and speak your clinical notes. When you stop, the AI will extract entities, classify urgency, and structure a SOAP note for you.
@@ -567,7 +583,7 @@ export default function SOAPNoteViewer() {
               <span className="text-body" style={{ marginTop: 16, fontWeight: 600, color: isRecording ? 'var(--green-primary)' : 'var(--text-secondary)' }}>
                 {processing ? 'Running AI pipeline...' : isRecording ? 'Recording... Tap to pause' : 'Tap to record'}
               </span>
-              
+
               <div style={{ display: 'flex', gap: 12, marginTop: 32 }}>
                 {isRecording && (
                   <button className="btn btn-primary" onClick={stopRecording} style={{ background: 'var(--green-primary)', borderColor: 'var(--green-primary)' }}>
@@ -585,11 +601,11 @@ export default function SOAPNoteViewer() {
             {showManualInput && !processing && (
               <div className="soap-live-transcript card animate-fade-in" style={{ marginTop: 24, padding: 20 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <span className="text-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Edit3 size={12}/> Type Raw Clinical Text</span>
-                  <button className="btn btn-ghost btn-sm" style={{ padding: 4 }} onClick={() => setShowManualInput(false)}><X size={16}/></button>
+                  <span className="text-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Edit3 size={12} /> Type Raw Clinical Text</span>
+                    <button className="btn btn-ghost btn-sm" style={{ padding: 4 }} onClick={() => setShowManualInput(false)}><X size={16} /></button>
                 </div>
-                <textarea 
-                  className="input" 
+                <textarea
+                  className="input"
                   style={{ width: '100%', minHeight: 120, fontSize: 14, lineHeight: 1.5, background: 'rgba(0,0,0,0.02)' }}
                   placeholder="e.g. Patient presents with severe headache and light sensitivity for 2 days. Vitals show BP 140/90. Started on Paracetamol..."
                   value={manualInputText}
@@ -614,7 +630,7 @@ export default function SOAPNoteViewer() {
             {/* Live transcript while speaking */}
             {(isRecording || liveTranscript) && !processing && !aiResult && (
               <div className="soap-live-transcript card animate-fade-in">
-                <span className="text-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Activity size={12}/> {isRecording ? 'Live Transcript' : 'Transcript'}</span>
+                <span className="text-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Activity size={12} /> {isRecording ? 'Live Transcript' : 'Transcript'}</span>
                 <p className="soap-ai-raw-text" style={{ marginTop: 8 }}>{liveTranscript || 'Listening...'}</p>
                 {isRecording && <div className="soap-live-dot" />}
               </div>
@@ -632,17 +648,7 @@ export default function SOAPNoteViewer() {
 
       {deleteConfirm && (
         <div style={{position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center'}} onClick={() => setDeleteConfirm(null)}>
-          <div 
-            className="card animate-fade-in" 
-            style={{width: 320, padding: 24, textAlign: 'center', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16}} 
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleDeleteNote(deleteConfirm);
-              if (e.key === 'Escape') setDeleteConfirm(null);
-            }}
-            tabIndex="0"
-            ref={(el) => el && el.focus()}
-          >
+          <div className="card animate-fade-in" style={{width: 320, padding: 24, textAlign: 'center', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16}} onClick={(e) => e.stopPropagation()}>
             <div style={{marginBottom: 16, color: '#ef4444', display: 'flex', justifyContent: 'center'}}>
               <AlertTriangle size={48} />
             </div>
@@ -657,4 +663,4 @@ export default function SOAPNoteViewer() {
       )}
     </div>
   );
-}
+}
