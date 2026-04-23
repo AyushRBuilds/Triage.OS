@@ -333,20 +333,7 @@ export default function SOAPNoteViewer() {
 
   return (
     <div className="soap-page" id="soap-notes-page">
-      <div className="page-header card">
-        <div>
-          <h3 className="page-title"><Note size={24} /> SOAP Notes</h3>
-          <p className="page-desc">
-            View patient records, AI-generated notes, and edit or create new SOAP notes.
-          </p>
-        </div>
-        <button
-          className="btn btn-primary"
-          onClick={() => { setShowAddForm(true); setEditingNote(null); setAiResult(null); }}
-        >
-          <Plus size={20} /> Create SOAP Note
-        </button>
-      </div>
+
 
       {/* Left panel — Notes list */}
       <div className="soap-left">

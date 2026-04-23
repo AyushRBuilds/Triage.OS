@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../api/supabaseClient';
 import { useAuth } from './AuthContext';
 import { toast } from '../components/Toast';
@@ -14,6 +14,9 @@ export function NotificationProvider({ children }) {
     shiftSwaps: true,
     soapNotes: false,
   });
+
+  const pendingCriticalRef = useRef(new Map());
+  const criticalTimerRef = useRef(null);
 
   // Load preferences from DB on mount/user change
   useEffect(() => {
@@ -40,12 +43,21 @@ export function NotificationProvider({ children }) {
     loadPrefs();
   }, [user]);
 
+  const isPatientAssignedToUser = (patient) => {
+    if (!patient) return false;
+    if (user.role === 'admin' || user.role === 'doctor') return true;
+    if (user.role === 'nurse') {
+      if (patient.assigned_nurse_id === user.id) return true;
+      if (patient.patient_assignments?.some(a => a.nurse_id === user.id)) return true;
+    }
+    return false;
+  };
+
   // Real-time subscriptions for clinical alerts
   useEffect(() => {
     if (!user) return;
 
     // 1. Subscribe to vitals changes for critical alerts
-    // Note: In a real scenario, you'd use 'INSERT' or 'UPDATE' on vitals table
     const vitalsChannel = supabase
       .channel('vitals-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'vitals' }, async (payload) => {
@@ -58,22 +70,55 @@ export function NotificationProvider({ children }) {
         const isCritical = vital.spo2 < 90 || vital.heart_rate > 140 || vital.heart_rate < 40 || vital.temperature > 39 || vital.temperature < 35;
         
         if (isCritical) {
-          const { data: p } = await supabase.from('patients').select('name').eq('id', vital.patient_id).single();
+          const { data: p } = await supabase
+            .from('patients')
+            .select('name, assigned_nurse_id, patient_assignments(nurse_id)')
+            .eq('id', vital.patient_id)
+            .single();
+            
+          if (!isPatientAssignedToUser(p)) return;
+
           const patientName = p?.name || 'Unknown Patient';
           
-          const newNotif = {
-            id: `v-${Date.now()}`,
-            type: 'critical',
-            text: `CRITICAL: ${patientName} - Vitals unstable (SpO2: ${vital.spo2}%, HR: ${vital.heart_rate}bpm)`,
-            time: 'Just now',
-            link: `/patients?patient=${vital.patient_id}`
-          };
-          setNotifications(prev => [newNotif, ...prev]);
-          toast.error(newNotif.text, { duration: 8000 });
-          
-          // Native browser notification if permission granted
-          if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('triage.os - Critical Alert', { body: newNotif.text });
+          // Batching Toasts & Notifications
+          pendingCriticalRef.current.set(vital.patient_id, { name: patientName, id: vital.patient_id });
+          if (!criticalTimerRef.current) {
+            criticalTimerRef.current = setTimeout(() => {
+              const patients = Array.from(pendingCriticalRef.current.values());
+              
+              if (patients.length === 1) {
+                const text = `CRITICAL: ${patients[0].name} - Unstable vitals detected`;
+                toast.error(text, { duration: 8000 });
+                setNotifications(prev => [{
+                  id: `v-${patients[0].id}-${Date.now()}`,
+                  type: 'critical',
+                  text: text,
+                  time: 'Just now',
+                  link: `/patients?patient=${patients[0].id}`
+                }, ...prev]);
+                
+                if ('Notification' in window && Notification.permission === 'granted') {
+                  new Notification('triage.os - Critical Alert', { body: text });
+                }
+              } else if (patients.length > 1) {
+                const text = `CRITICAL: Unstable vitals in ${patients.length} patients`;
+                toast.error(text, { duration: 8000 });
+                setNotifications(prev => [{
+                  id: `v-batch-${Date.now()}`,
+                  type: 'critical',
+                  text: text,
+                  time: 'Just now',
+                  link: `/patients` // general link since multiple patients
+                }, ...prev]);
+                
+                if ('Notification' in window && Notification.permission === 'granted') {
+                  new Notification('triage.os - Critical Alert', { body: text });
+                }
+              }
+              
+              pendingCriticalRef.current.clear();
+              criticalTimerRef.current = null;
+            }, 2500); // Increased window to 2.5s to ensure loop finishes
           }
         }
       })
@@ -87,7 +132,13 @@ export function NotificationProvider({ children }) {
         
         const med = payload.new;
         if (med.urgency === 'STAT') {
-          const { data: p } = await supabase.from('patients').select('name').eq('id', med.patient_id).single();
+          const { data: p } = await supabase
+            .from('patients')
+            .select('name, assigned_nurse_id, patient_assignments(nurse_id)')
+            .eq('id', med.patient_id)
+            .single();
+            
+          if (!isPatientAssignedToUser(p)) return;
           const patientName = p?.name || 'Unknown Patient';
 
           const newNotif = {
@@ -133,7 +184,13 @@ export function NotificationProvider({ children }) {
         
         const note = payload.new;
         if (note.urgency_level === 'Critical' || note.urgency_level === 'Stat') {
-          const { data: p } = await supabase.from('patients').select('name').eq('id', note.patient_id).single();
+          const { data: p } = await supabase
+            .from('patients')
+            .select('name, assigned_nurse_id, patient_assignments(nurse_id)')
+            .eq('id', note.patient_id)
+            .single();
+            
+          if (!isPatientAssignedToUser(p)) return;
           const patientName = p?.name || 'Unknown Patient';
           
           const newNotif = {
@@ -154,8 +211,15 @@ export function NotificationProvider({ children }) {
       .channel('task-alerts')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'tasks' }, async (payload) => {
         const task = payload.new;
-        // Notify if it's high priority or explicitly assigned (if assignedTo matches name)
         if (task.priority === 'STAT' || task.priority === 'Urgent') {
+          const { data: p } = await supabase
+            .from('patients')
+            .select('name, assigned_nurse_id, patient_assignments(nurse_id)')
+            .eq('id', task.patient_id)
+            .single();
+            
+          if (!isPatientAssignedToUser(p)) return;
+
           const newNotif = {
             id: `task-${Date.now()}`,
             type: 'stat',
@@ -188,54 +252,58 @@ export function NotificationProvider({ children }) {
         // 1. Fetch pending STAT medications
         const { data: meds } = await supabase
           .from('medications')
-          .select('*, patient:patients(name)')
+          .select('*, patient:patients(name, assigned_nurse_id, patient_assignments(nurse_id))')
           .eq('urgency', 'STAT')
           .eq('status', 'pending');
         
         if (meds) {
           meds.forEach(m => {
-            initialNotifs.push({
-              id: `m-${m.id}`,
-              type: 'stat',
-              text: `STAT MED: ${m.name} due for ${m.patient?.name || 'Unknown'}`,
-              time: 'Pending',
-              link: `/patients?patient=${m.patient_id}`
-            });
+            if (isPatientAssignedToUser(m.patient)) {
+              initialNotifs.push({
+                id: `m-${m.id}`,
+                type: 'stat',
+                text: `STAT MED: ${m.name} due for ${m.patient?.name || 'Unknown'}`,
+                time: 'Pending',
+                link: `/patients?patient=${m.patient_id}`
+              });
+            }
           });
         }
 
         // 2. Fetch pending high-priority tasks
         const { data: tasks } = await supabase
           .from('tasks')
-          .select('*')
+          .select('*, patient:patients(name, assigned_nurse_id, patient_assignments(nurse_id))')
           .in('priority', ['STAT', 'Urgent'])
           .eq('status', 'todo');
         
         if (tasks) {
           tasks.forEach(t => {
-            initialNotifs.push({
-              id: `task-${t.id}`,
-              type: 'stat',
-              text: `URGENT TASK: ${t.title}`,
-              time: 'Incomplete',
-              link: '/tasks'
-            });
+            if (isPatientAssignedToUser(t.patient)) {
+              initialNotifs.push({
+                id: `task-${t.id}`,
+                type: 'stat',
+                text: `URGENT TASK: ${t.title}`,
+                time: 'Incomplete',
+                link: '/tasks'
+              });
+            }
           });
         }
 
         // 3. Fetch critical vitals
         const { data: vitals } = await supabase
           .from('vitals')
-          .select('*, patient:patients(name)');
+          .select('*, patient:patients(name, assigned_nurse_id, patient_assignments(nurse_id))');
         
         if (vitals) {
           vitals.forEach(v => {
             const isCritical = v.spo2 < 90 || v.heart_rate > 140 || v.heart_rate < 40 || v.temperature > 39 || v.temperature < 35;
-            if (isCritical) {
+            if (isCritical && isPatientAssignedToUser(v.patient)) {
               initialNotifs.push({
                 id: `v-${v.id}`,
                 type: 'critical',
-                text: `CRITICAL: ${v.patient?.name || 'Patient'} - Vitals unstable (SpO2: ${v.spo2}%)`,
+                text: `CRITICAL: ${v.patient?.name || 'Patient'} - Unstable vitals detected`,
                 time: 'Live',
                 link: `/patients?patient=${v.patient_id}`
               });

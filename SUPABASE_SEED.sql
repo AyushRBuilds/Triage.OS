@@ -1,8 +1,8 @@
 -- ============================================================
--- 3. TRIAGE.OS ULTIMATE SEED DATA (v2)
+-- 3. TRIAGE.OS ULTIMATE SEED DATA (v3)
 -- ============================================================
 
--- A. NURSES (All roles represented)
+-- A. NURSES
 INSERT INTO public.nurses (id, name, email, initials, role, ward, shift_type)
 VALUES 
   ('nurse-priya', 'Priya Mehta', 'priya@triage.os', 'PM', 'Senior Nurse', 'ICU Ward 3', 'Day'),
@@ -10,10 +10,7 @@ VALUES
   ('nurse-deepak', 'Deepak Nair', 'deepak@triage.os', 'DN', 'Junior Nurse', 'ICU Ward 3', 'Day')
 ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email;
 
--- B. PATIENTS (Divided strictly between the nurses)
--- NURSE 1 (Priya) Patients: 01, 02, 03, 04
--- NURSE 2 (Kavita) Patients: 05, 06, 07, 08
--- NURSE 3 (Deepak) Patients: 09, 10, 11, 12
+-- B. PATIENTS (Diverse Genders and Ages)
 INSERT INTO public.patients (id, name, age, gender, bed, ward, risk, initials, diagnosis, assigned_nurse_id)
 VALUES
   ('00000000-0000-0000-0000-000000000001', 'Mr. Raj Sharma', 67, 'M', 'Bed 7', 'ICU Ward 3', 'P1', 'RS', 'Acute MI, Hypertensive Crisis', 'nurse-priya'),
@@ -28,9 +25,9 @@ VALUES
   ('00000000-0000-0000-0000-000000000010', 'Mr. John Doe', 50, 'M', 'Bed 15', 'General Ward 1', 'P5', 'JD', 'Routine Checkup', 'nurse-deepak'),
   ('00000000-0000-0000-0000-000000000011', 'Mrs. Sarah Connor', 42, 'F', 'Bed 16', 'ICU Ward 3', 'P2', 'SC', 'Multiple Trauma', 'nurse-deepak'),
   ('00000000-0000-0000-0000-000000000012', 'Mr. Bruce Wayne', 38, 'M', 'Bed 17', 'ICU Ward 3', 'P1', 'BW', 'Head Injury, Concussion', 'nurse-deepak')
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET gender = EXCLUDED.gender, age = EXCLUDED.age, diagnosis = EXCLUDED.diagnosis;
 
--- C. VITALS (Comprehensive set for all patients)
+-- C. VITALS
 INSERT INTO public.vitals (patient_id, heart_rate, spo2, temperature, bp_sys, bp_dia, rr)
 VALUES
   ('00000000-0000-0000-0000-000000000001', 112, 91, 38.2, 160, 95, 24),
@@ -56,13 +53,17 @@ VALUES
   ('00000000-0000-0000-0000-000000000011', 'Morphine 5mg', 'STAT', 'pending', 'Now', '20:30')
 ON CONFLICT DO NOTHING;
 
--- E. TASKS (Notification Seed)
+-- E. TASKS (Extensive Seed)
 INSERT INTO public.tasks (title, priority, status, patient_id, created_by, type)
 VALUES
   ('Prep for Emergency Intubation', 'STAT', 'todo', '00000000-0000-0000-0000-000000000005', 'nurse-kavita', 'nursing'),
   ('Repeat ECG in 30 mins', 'Urgent', 'inprogress', '00000000-0000-0000-0000-000000000001', 'nurse-priya', 'diagnostic'),
   ('Wound Dressing Change', 'Routine', 'todo', '00000000-0000-0000-0000-000000000002', 'nurse-priya', 'nursing'),
-  ('Neuro Obs Q1H', 'Urgent', 'todo', '00000000-0000-0000-0000-000000000012', 'nurse-deepak', 'vitals')
+  ('Neuro Obs Q1H', 'Urgent', 'todo', '00000000-0000-0000-0000-000000000012', 'nurse-deepak', 'vitals'),
+  ('Administer STAT Antibiotics', 'STAT', 'todo', '00000000-0000-0000-0000-000000000005', 'nurse-kavita', 'medication'),
+  ('Update Family on Condition', 'Routine', 'todo', '00000000-0000-0000-0000-000000000003', 'nurse-priya', 'admin'),
+  ('Check Blood Glucose', 'Urgent', 'todo', '00000000-0000-0000-0000-000000000004', 'nurse-priya', 'nursing'),
+  ('Mobilize Patient with Physio', 'Routine', 'todo', '00000000-0000-0000-0000-000000000008', 'nurse-kavita', 'nursing')
 ON CONFLICT DO NOTHING;
 
 -- F. SOAP NOTES

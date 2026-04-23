@@ -180,7 +180,7 @@ export default function NurseDashboard() {
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}><UserCircle2 size={12} /> Profile</span>
                   <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Patient Profile</span>
                   <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {currentPatient.age ? `${currentPatient.age} years old` : 'Unknown age'} • {currentPatient.weight ? `${currentPatient.weight} kg` : 'Unknown weight'}
+                    {currentPatient.gender === 'M' ? 'Male' : currentPatient.gender === 'F' ? 'Female' : 'Other'} • {currentPatient.age ? `${currentPatient.age} yrs` : 'Unknown age'} • {currentPatient.weight ? `${currentPatient.weight} kg` : '70 kg'}
                   </p>
                 </div>
                 <div style={{ background: 'var(--bg-main)', padding: 16, borderRadius: 12, border: '1px solid var(--border-default)' }}>

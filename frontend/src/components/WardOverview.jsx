@@ -83,6 +83,7 @@ export default function WardOverview() {
                 ...bed,
                 status: livePatient.risk === 'P1' ? 'critical' : 'occupied',
                 patient: livePatient.name,
+                gender: livePatient.gender,
                 priority: livePatient.risk,
                 admittedAt: livePatient.admittedDate || bed.admittedAt,
                 assignedNurses: livePatient.assignedNurses,
@@ -361,7 +362,9 @@ export default function WardOverview() {
                         </div>
                         {bed.patient ? (
                           <div className="wo-bed-details">
-                            <span className="wo-bed-patient">{bed.patient}</span>
+                            <span className="wo-bed-patient">
+                              {bed.gender === 'M' ? '♂ ' : bed.gender === 'F' ? '♀ ' : ''}{bed.patient}
+                            </span>
                             <span className={`badge badge-sm ${PRIORITY_CONFIG[bed.priority]?.badge}`}>
                               {bed.priority}
                             </span>
@@ -458,7 +461,9 @@ export default function WardOverview() {
                     {activeBed.patient.split(' ').map((n) => n[0]).join('')}
                   </div>
                   <div>
-                    <div className="text-card-title">{activeBed.patient}</div>
+                    <div className="text-card-title">
+                      {activeBed.gender === 'M' ? '♂ ' : activeBed.gender === 'F' ? '♀ ' : ''}{activeBed.patient}
+                    </div>
                     <span className={`badge ${PRIORITY_CONFIG[activeBed.priority]?.badge}`}>
                       {activeBed.priority} — {PRIORITY_CONFIG[activeBed.priority]?.label}
                     </span>

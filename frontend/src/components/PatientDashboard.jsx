@@ -1,21 +1,28 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Activity, Heart, Wind, FileText, User, Calendar, ChevronRight, Search, Filter, Info, Download } from 'lucide-react';
 import { getPatients, getSoapNotesByPatient } from '../api/services';
 import { useAuth } from '../contexts/AuthContext';
 import { getRiskBadgeClass, getRiskColor } from '../data/mockData';
+import { useSimulatedVitals } from '../hooks/useSimulatedVitals';
 import VitalMiniCard from './ui/VitalMiniCard';
 import './PatientDashboard.css';
 
 export default function PatientDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
-  const [patients, setPatients] = useState([]);
-  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [rawPatients, setRawPatients] = useState([]);
+  const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [riskFilter, setRiskFilter] = useState('all');
   const [showExpandedVitals, setShowExpandedVitals] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+
+  // Live vitals
+  const { patients } = useSimulatedVitals(rawPatients);
+  
+  const selectedPatient = selectedPatientId ? patients.find(p => p.id === selectedPatientId) : null;
 
   const downloadReport = async (patient) => {
     if (!patient) return;
@@ -101,15 +108,27 @@ END OF REPORT
       let filtered = p;
       if (user?.role === 'nurse') {
         filtered = p.filter(patient =>
-          patient.assignedNurses?.some(n => n.id === user.id)
+          patient.assignedNurses?.some(n => n.id === user?.id) || patient.assignedNurse === user?.name
         );
+      } else if (user?.role === 'admin' || user?.role === 'doctor') {
+        // can see all patients
+        filtered = p;
       }
 
-      setPatients(filtered);
-      if (filtered.length > 0) setSelectedPatient(filtered[0]);
+      setRawPatients(filtered);
+      
+      // Deep link to patient from URL if present
+      const params = new URLSearchParams(location.search);
+      const patientIdParam = params.get('patient');
+      
+      if (patientIdParam && filtered.some(pt => pt.id === patientIdParam)) {
+        setSelectedPatientId(patientIdParam);
+      } else if (filtered.length > 0) {
+        setSelectedPatientId(filtered[0].id);
+      }
     }
     load();
-  }, [user]);
+  }, [user, location.search]);
 
   const filteredPatients = patients.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -160,7 +179,7 @@ END OF REPORT
             <button
               key={p.id}
               className={`pd-patient-item ${selectedPatient?.id === p.id ? 'active' : ''}`}
-              onClick={() => setSelectedPatient(p)}
+              onClick={() => setSelectedPatientId(p.id)}
             >
               <div className="pd-patient-avatar" style={{ background: getRiskColor(p.risk) }}>
                 {p.initials}

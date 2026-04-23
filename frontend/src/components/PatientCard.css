@@ -46,6 +46,23 @@
 .pc-bed {
   font-size: 11px;
   color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gender-tag {
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+.gender-m {
+  color: #3b82f6; /* Blue for male */
+  background: rgba(59, 130, 246, 0.1);
+}
+.gender-f {
+  color: #ec4899; /* Pink for female */
+  background: rgba(236, 72, 153, 0.1);
 }
 
 .pc-badges {

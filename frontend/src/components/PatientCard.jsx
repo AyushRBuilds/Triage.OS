@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Heart, Wind, Activity, ArrowRight, Info } from 'lucide-react';
 import { getRiskColor, getRiskBadgeClass, getVitalStatus } from '../data/mockData';
 import { useAnimatedValue } from '../hooks/useSimulatedVitals';
@@ -24,8 +25,14 @@ function AnimatedVital({ value, type, icon: Icon, label }) {
 }
 
 export default function PatientCard({ patient, onClick }) {
+  const navigate = useNavigate();
   const riskColor = getRiskColor(patient.risk);
   const riskClass = getRiskBadgeClass(patient.risk);
+
+  const handleViewDetails = (e) => {
+    e.stopPropagation();
+    navigate(`/patients?patient=${patient.id}`);
+  };
 
   return (
     <div
@@ -40,7 +47,12 @@ export default function PatientCard({ patient, onClick }) {
         </div>
         <div className="pc-info">
           <span className="pc-name">{patient.name}</span>
-          <span className="pc-bed text-mono">{patient.bed} · {patient.ward}</span>
+          <span className="pc-bed text-mono">
+            <span className={`gender-tag gender-${patient.gender?.toLowerCase()}`}>
+              {patient.gender === 'M' ? '♂ Male' : patient.gender === 'F' ? '♀ Female' : 'Other'}
+            </span>
+            {' · '}{patient.age}y · {patient.bed} · {patient.ward}
+          </span>
         </div>
         <div className="pc-badges">
           <span className={`badge ${riskClass}`}>{patient.risk}</span>
@@ -67,7 +79,7 @@ export default function PatientCard({ patient, onClick }) {
 
       <div className="pc-footer">
         <span className="text-timestamp">Last updated {patient.lastUpdated}</span>
-        <button className="pc-view-btn">
+        <button className="pc-view-btn" onClick={handleViewDetails}>
           View Details <ArrowRight size={12} />
         </button>
       </div>

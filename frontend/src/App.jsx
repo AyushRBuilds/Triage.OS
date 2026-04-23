@@ -60,13 +60,12 @@ export default function App() {
 
   // Shared Report view is public and standalone
   if (location.pathname.startsWith('/share/report/')) {
+    // Extract token from path /share/report/TOKEN
     return (
-      <>
-        <Routes>
-          <Route path="/share/report/:patientId" element={<SharedReportView />} />
-        </Routes>
+      <div className="public-report-container">
+        <SharedReportView />
         <ToastContainer />
-      </>
+      </div>
     );
   }
 
