@@ -56,6 +56,8 @@ export default function ShiftSwapPanel() {
       setRequests((prev) =>
         prev.map((r) => (r.id === requestId ? { ...r, status: 'finalized' } : r))
       );
+      // Re-fetch patients so the Shared Patients view updates immediately
+      import('../api/services').then(m => m.getPatients()).then(setPatients);
       toast.success('Patients successfully transferred!');
     } catch (err) {
       toast.error('Failed to transfer patients.');
