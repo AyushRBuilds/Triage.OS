@@ -102,6 +102,7 @@ export async function getPatientById(id) {
 }
 
 export async function updatePatientVitals(patientId, vitals) {
+<<<<<<< HEAD
   const { data, error } = await supabase
     .from('vitals')
     .upsert({ patient_id: patientId, ...vitals, recorded_at: new Date().toISOString() }, {
@@ -110,6 +111,24 @@ export async function updatePatientVitals(patientId, vitals) {
 
   if (error) handleError(error, 'updatePatientVitals');
   return data;
+=======
+  // Now routing through our Python AI backend to get real-time risk scoring
+  const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/vitals`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      patient_id: patientId,
+      heart_rate: vitals.hr,
+      spo2: vitals.spo2,
+      blood_pressure_sys: vitals.bp_sys,
+      blood_pressure_dia: vitals.bp_dia,
+      temperature: vitals.temp,
+    }),
+  });
+
+  if (!res.ok) throw new Error('Failed to update vitals via AI backend');
+  return res.json();
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 }
 
 export async function addPatient(patient) {
@@ -206,6 +225,49 @@ export async function getNurses() {
   }));
 }
 
+<<<<<<< HEAD
+=======
+export async function addNurse(staff) {
+  // Build a deterministic ID from name (slug-style)
+  const id = staff.id || `nurse-${staff.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
+  const initials = staff.name
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
+  const payload = {
+    id,
+    name: staff.name,
+    email: staff.email,
+    password_hash: staff.password || null, // store as plain text for demo; hash server-side in prod
+    initials,
+    role: staff.role,
+    ward: staff.ward,
+    shift_type: staff.shift_type,
+    max_capacity: parseInt(staff.max_capacity, 10) || 8,
+  };
+
+  const { data, error } = await supabase
+    .from('nurses')
+    .insert([payload])
+    .select()
+    .single();
+
+  if (error) handleError(error, 'addNurse');
+  return data;
+}
+
+export async function deleteNurse(nurseId) {
+  const { error } = await supabase
+    .from('nurses')
+    .delete()
+    .eq('id', nurseId);
+  if (error) handleError(error, 'deleteNurse');
+}
+
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 // ══════════════════════════════════════════════════════════════
 // TASKS
 // ══════════════════════════════════════════════════════════════
@@ -302,6 +364,7 @@ export async function createSoapNote(note) {
   return data;
 }
 
+<<<<<<< HEAD
 export async function transcribeAudio(audioBlob) {
   // Still uses a backend endpoint — AI team will implement this
   const formData = new FormData();
@@ -311,6 +374,16 @@ export async function transcribeAudio(audioBlob) {
     body: formData,
   });
   if (!res.ok) throw new Error('Transcription failed');
+=======
+export async function processSoapRawText(text) {
+  // Call the AI backend (ML team endpoint) to run NER + Urgency Classifier
+  const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/soap/process_raw`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ raw_text: text }),
+  });
+  if (!res.ok) throw new Error('Failed to process SOAP text via AI pipeline');
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
   return res.json();
 }
 
@@ -332,6 +405,7 @@ export async function getChatHistory() {
   }));
 }
 
+<<<<<<< HEAD
 export async function sendChatMessage(message) {
   // Save user message first
   await supabase.from('chat_messages').insert([{ role: 'user', text: message }]);
@@ -341,11 +415,26 @@ export async function sendChatMessage(message) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message }),
+=======
+export async function sendChatMessage(message, patientId = null) {
+  // Save user message first (Supabase log)
+  await supabase.from('chat_messages').insert([{ role: 'user', text: message }]);
+
+  // Call the AI backend (ML team endpoint)
+  const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, patient_id: patientId }),
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
   });
 
   if (!res.ok) throw new Error('Chat request failed');
   const reply = await res.json();
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
   // Save AI response to DB
   const { data, error } = await supabase
     .from('chat_messages')
@@ -495,6 +584,7 @@ export async function deletePatient(patientId) {
 // ANALYTICS
 // ══════════════════════════════════════════════════════════════
 
+<<<<<<< HEAD
 export async function getTriageScoreHistory(patientId) {
   // Mocking score history if no patientId or if we want demo data
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -528,6 +618,16 @@ export async function getScheduleData() {
   });
 
   return { days: scheduleDays };
+=======
+export async function getTriageScoreHistory() {
+  // This will come from your AI/ML team writing to a `triage_scores` table.
+  // Placeholder until backend provides it:
+  return [];
+}
+
+export async function getScheduleData() {
+  return {};
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -550,7 +650,11 @@ export async function getDashboardStats() {
 // Maps snake_case DB columns → camelCase shape the UI expects
 // ══════════════════════════════════════════════════════════════
 
+<<<<<<< HEAD
 function normalizePatient(p) {
+=======
+export function normalizePatient(p) {
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
   if (!p) return null;
   
   // Handle new assignment logic & 24hr expiration
@@ -571,6 +675,18 @@ function normalizePatient(p) {
     isTemporary: a.is_temporary
   }));
 
+<<<<<<< HEAD
+=======
+  if (p.assigned_nurse && !assignedNurses.some(n => n.id === p.assigned_nurse.id)) {
+    assignedNurses.push({
+      id: p.assigned_nurse.id,
+      name: p.assigned_nurse.name,
+      initials: p.assigned_nurse.initials,
+      isTemporary: false
+    });
+  }
+
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
   // Fallback string for legacy UI components
   const primaryNurseName = assignedNurses.length > 0 
     ? assignedNurses.map(n => n.name).join(', ') 

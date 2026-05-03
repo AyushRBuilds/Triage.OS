@@ -3,6 +3,10 @@ import { FileText, Download, Search, User, Calendar, Activity, ChevronRight, Fil
 import { getPatients, getSoapNotesByPatient } from '../api/services';
 import { getRiskBadgeClass } from '../data/mockData';
 import { toast } from './Toast';
+<<<<<<< HEAD
+=======
+import { encodeShareToken } from '../utils/shareHelper';
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 import './PatientDashboard.css'; // Reuse some styles
 
 export default function ReportsPage() {
@@ -109,7 +113,13 @@ END OF REPORT
   const shareReport = async () => {
     if (!selectedPatient) return;
     
+<<<<<<< HEAD
     const shareUrl = `${window.location.origin}/share/report/${selectedPatient.id}`;
+=======
+    const token = encodeShareToken(selectedPatient.id);
+    const shareUrl = `${window.location.origin}/share/report/${token}`;
+    console.log('Generating Share URL:', shareUrl);
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
     const shareText = `Triage.OS Report for ${selectedPatient.name}\nBed: ${selectedPatient.bed}\nRisk: ${selectedPatient.risk}\nDiagnosis: ${selectedPatient.diagnosis}`;
     
     if (navigator.share) {

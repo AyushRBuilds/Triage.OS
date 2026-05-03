@@ -21,10 +21,13 @@ export default function ScheduleCard({ schedule }) {
 
   const visibleDays = schedule?.days?.slice(offset, offset + visibleCount) || [];
 
+<<<<<<< HEAD
   const toggleDaySelection = (index) => {
     setSelectedDayIndex(index);
   };
 
+=======
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
   // Determine current shift info
   const now = new Date();
   const hour = now.getHours();
@@ -55,6 +58,7 @@ export default function ScheduleCard({ schedule }) {
         </div>
       </div>
       <div className="schedule-days">
+<<<<<<< HEAD
         {visibleDays.map((d, i) => {
           const actualIndex = offset + i;
           return (
@@ -70,6 +74,20 @@ export default function ScheduleCard({ schedule }) {
             </button>
           );
         })}
+=======
+        {visibleDays.map((d, i) => (
+          <button
+            key={i}
+            type="button"
+            className={`schedule-day ${offset + i === selectedDayIndex ? 'active' : ''}`}
+            onClick={() => setSelectedDayIndex(offset + i)}
+          >
+            <span className="schedule-day-name">{d.day}</span>
+            <span className="schedule-day-date">{d.date}</span>
+            {d.tasks > 0 && <span className="schedule-day-tasks">{d.tasks} tasks</span>}
+          </button>
+        ))}
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
       </div>
     </div>
   );

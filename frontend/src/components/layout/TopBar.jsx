@@ -1,12 +1,20 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+<<<<<<< HEAD
 import { Search, Bell, ChevronDown, User, X, AlertTriangle, Clock, CheckCircle, PenLine, LogOut } from 'lucide-react';
+=======
+import { Search, Bell, ChevronDown, User, X, AlertTriangle, Clock, CheckCircle, PenLine, LogOut, Sun, Moon } from 'lucide-react';
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 import FloatingNotes from './FloatingNotes';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { subscribeToShiftSwaps, confirmShiftSwapTransfer } from '../../api/services';
 import { toast } from '../Toast';
+<<<<<<< HEAD
 import { patients } from '../../data/mockData';
+=======
+import { supabase } from '../../api/supabaseClient';
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 import './TopBar.css';
 
 export default function TopBar() {
@@ -18,13 +26,43 @@ export default function TopBar() {
   const [showProfile, setShowProfile] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
+<<<<<<< HEAD
   const [transferConfirm, setTransferConfirm] = useState(null);
+=======
+  const [isDarkMode, setIsDarkMode] = useState(document.body.classList.contains('dark'));
+  const [transferConfirm, setTransferConfirm] = useState(null);
+
+  const toggleTheme = () => {
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    if (newMode) {
+      document.body.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.body.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  };
+
+  // Initialize theme from localStorage
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      document.body.classList.add('dark');
+      setIsDarkMode(true);
+    }
+  }, []);
+
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
   const notesRef = useRef(null);
   const searchRef = useRef(null);
   const profileRef = useRef(null);
   const notifRef = useRef(null);
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
   // Close dropdowns on outside click only
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -109,11 +147,15 @@ export default function TopBar() {
 
   return (
     <header className="topbar" id="topbar">
+<<<<<<< HEAD
       <button className="topbar-brand" onClick={() => navigate('/')} title="t.os home">
         <span className="topbar-brand-text">
           t<span className="topbar-brand-accent">.os</span>
         </span>
       </button>
+=======
+      {/* Spacer where logo used to be */}
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 
       {/* Greeting */}
       <div className="topbar-greeting">
@@ -166,6 +208,19 @@ export default function TopBar() {
 
       {/* Right section */}
       <div className="topbar-right">
+<<<<<<< HEAD
+=======
+        {/* Theme Toggle */}
+        <button
+          className="topbar-bell"
+          onClick={toggleTheme}
+          title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          style={{ marginRight: 8 }}
+        >
+          {isDarkMode ? <Sun size={20} strokeWidth={1.8} /> : <Moon size={20} strokeWidth={1.8} />}
+        </button>
+
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
         {/* Notes button */}
         <div className="topbar-notif-wrapper" ref={notesRef}>
           <button

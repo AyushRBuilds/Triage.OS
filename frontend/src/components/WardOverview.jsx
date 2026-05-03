@@ -57,6 +57,11 @@ const PRIORITY_CONFIG = {
   P1: { label: 'Critical', badge: 'badge-p1' },
   P2: { label: 'Urgent', badge: 'badge-p2' },
   P3: { label: 'Standard', badge: 'badge-p3' },
+<<<<<<< HEAD
+=======
+  P4: { label: 'Low', badge: 'badge-p4' },
+  P5: { label: 'Stable', badge: 'badge-p5' },
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 };
 
 export default function WardOverview() {
@@ -81,6 +86,10 @@ export default function WardOverview() {
                 ...bed,
                 status: livePatient.risk === 'P1' ? 'critical' : 'occupied',
                 patient: livePatient.name,
+<<<<<<< HEAD
+=======
+                gender: livePatient.gender,
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
                 priority: livePatient.risk,
                 admittedAt: livePatient.admittedDate || bed.admittedAt,
                 assignedNurses: livePatient.assignedNurses,
@@ -359,7 +368,13 @@ export default function WardOverview() {
                         </div>
                         {bed.patient ? (
                           <div className="wo-bed-details">
+<<<<<<< HEAD
                             <span className="wo-bed-patient">{bed.patient}</span>
+=======
+                            <span className="wo-bed-patient">
+                              {bed.gender === 'M' ? '♂ ' : bed.gender === 'F' ? '♀ ' : ''}{bed.patient}
+                            </span>
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
                             <span className={`badge badge-sm ${PRIORITY_CONFIG[bed.priority]?.badge}`}>
                               {bed.priority}
                             </span>
@@ -456,7 +471,13 @@ export default function WardOverview() {
                     {activeBed.patient.split(' ').map((n) => n[0]).join('')}
                   </div>
                   <div>
+<<<<<<< HEAD
                     <div className="text-card-title">{activeBed.patient}</div>
+=======
+                    <div className="text-card-title">
+                      {activeBed.gender === 'M' ? '♂ ' : activeBed.gender === 'F' ? '♀ ' : ''}{activeBed.patient}
+                    </div>
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
                     <span className={`badge ${PRIORITY_CONFIG[activeBed.priority]?.badge}`}>
                       {activeBed.priority} — {PRIORITY_CONFIG[activeBed.priority]?.label}
                     </span>

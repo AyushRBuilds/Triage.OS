@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Triage.OS - Advanced Clinical Intelligence & Ward Management
 
 Triage.OS is a next-generation healthcare operating system designed to bridge the gap between high-volume clinical data and actionable insights. By integrating high-fidelity vital sign simulation with Large Language Models (LLMs), it reduces administrative burden and enhances patient safety through automated documentation and real-time monitoring.
@@ -139,3 +140,6 @@ Triage.OS/
 ## 📄 License
 Internal use only. Part of the Hello project suite.
 
+=======
+NurseOS is an AI hospital workflow assistant that runs locally to convert spoken nurse notes into structured handoffs, classify medication urgency, and score patient risk from simulated vitals. It also provides a real-time platform with patient kanban, nurse shift swaps, doctor task panels, and admin dashboards via WebSockets.
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457

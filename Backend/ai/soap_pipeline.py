@@ -1,13 +1,30 @@
 """
 SOAP Pipeline
 -------------
+<<<<<<< HEAD
 Connects the NER model, urgency classifier, and OpenRouter LLM to produce
+=======
+<<<<<<< HEAD
+Connects the NER model and urgency classifier to produce
+=======
+Connects the NER model, urgency classifier, and OpenRouter LLM to produce
+>>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 structured SOAP notes from raw clinical text.
 
 Usage:
     from ai.soap_pipeline import run_pipeline
     result = run_pipeline("Patient complains of chest pain...")
 """
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+from ai.ner_model import extract as ner_extract
+from ai.urgency_classifier import classify as urgency_classify
+
+# Entity labels that map to each SOAP section
+=======
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 import os
 import re
 import json
@@ -25,6 +42,10 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3-super-120b-a12b:free")
 
 # Entity labels that map to each SOAP section (used as fallback)
+<<<<<<< HEAD
+=======
+>>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 _SUBJECTIVE_LABELS  = {"SYMPTOM", "COMPLAINT", "HISTORY", "DURATION"}
 _OBJECTIVE_LABELS   = {"VITAL", "LAB", "MEASUREMENT", "TEST", "FINDING"}
 _ASSESSMENT_LABELS  = {"DISEASE", "CONDITION", "DIAGNOSIS", "DISORDER"}
@@ -32,7 +53,15 @@ _PLAN_LABELS        = {"DRUG", "TREATMENT", "PROCEDURE", "MEDICATION", "DOSAGE"}
 
 
 def _group_entities(entities: list[dict]) -> dict[str, list[str]]:
+<<<<<<< HEAD
     """Sort extracted entities into SOAP buckets (fallback method)."""
+=======
+<<<<<<< HEAD
+    """Sort extracted entities into SOAP buckets."""
+=======
+    """Sort extracted entities into SOAP buckets (fallback method)."""
+>>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
     groups: dict[str, list[str]] = {
         "subjective": [], "objective": [], "assessment": [], "plan": [], "other": []
     }
@@ -51,6 +80,11 @@ def _group_entities(entities: list[dict]) -> dict[str, list[str]]:
     return groups
 
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 def _call_openrouter(messages: list[dict], json_mode: bool = False, timeout: int = 60) -> str | None:
     """
     Call the OpenRouter API with the given messages.
@@ -183,10 +217,17 @@ def _format_soap_with_llm(raw_text: str, entities: list[dict], urgency: dict) ->
         "You are an expert clinical medical scribe working in a hospital emergency department. "
         "Your task is to convert raw clinical transcripts into professional SOAP notes. "
         "You MUST respond with ONLY a valid JSON object — no markdown, no code fences, no commentary. "
+<<<<<<< HEAD
         "Every section MUST contain 1-3 complete, professional clinical sentences. NEVER leave a section empty."
     )
 
     user_prompt = f"""Convert this raw clinical transcript into a structured SOAP note.
+=======
+        "Every section MUST be extremely concise, containing at most 1-2 short sentences. NEVER leave a section empty, and DO NOT include unnecessary fluff."
+    )
+
+    user_prompt = f"""Convert this raw clinical transcript into a strictly concise structured SOAP note.
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 
 TRANSCRIPT:
 \"{raw_text}\"
@@ -194,6 +235,7 @@ TRANSCRIPT:
 EXTRACTED MEDICAL ENTITIES: {entity_summary}
 TRIAGE URGENCY: {urgency.get('label', 'Unknown')} (confidence: {urgency.get('confidence', 0):.1%})
 
+<<<<<<< HEAD
 INSTRUCTIONS — follow these exactly:
 1. **Subjective (S):** Write 1-3 sentences summarizing patient demographics, chief complaint, reported symptoms, onset, duration, and relevant history. Use narrative clinical prose.
 2. **Objective (O):** Write 1-3 sentences documenting vital signs (format: HR ___ bpm, BP ___/___ mmHg, SpO2 __%, Temp ___°C, RR ___ breaths/min), physical exam findings, and any labs/tests mentioned. If specific values were mentioned in the transcript, include them.
@@ -204,6 +246,18 @@ CRITICAL RULES:
 - Write in complete professional clinical sentences, NOT bullet points or semicolon-separated lists.
 - EVERY section must have content. If the transcript lacks info for a section, write a clinically appropriate default (e.g., "Vital signs to be obtained" for missing vitals).
 - Use standard medical abbreviations where appropriate.
+=======
+INSTRUCTIONS — follow these exactly to keep it VERY short (max 2 lines per section):
+1. **Subjective (S):** Maximum 2 short sentences. Summarize demographics, chief complaint, and key symptoms only. No fluff.
+2. **Objective (O):** Maximum 2 short sentences. List vital signs (e.g. HR ___ bpm, BP ___/___ mmHg, SpO2 __%) and critical exam findings.
+3. **Assessment (A):** Maximum 1-2 short sentences. State clinical impression/diagnosis and triage classification.
+4. **Plan (P):** Maximum 2 short sentences. List immediate interventions, medications, and disposition concisely.
+
+CRITICAL RULES:
+- Write in brief, direct professional clinical sentences. NO extra commentary.
+- EVERY section must have content. If the transcript lacks info, write a brief default (e.g., "Vitals pending").
+- Use standard medical abbreviations to save space.
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 
 Respond with ONLY this JSON (fill in the quoted values):
 {{"subjective": "...", "objective": "...", "assessment": "...", "plan": "..."}}"""
@@ -562,6 +616,10 @@ def _extract_prelim_risk(raw_text: str) -> float | None:
     return prelim_risk
 
 
+<<<<<<< HEAD
+=======
+>>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 def run_pipeline(raw_text: str) -> dict:
     """
     Process raw clinical text and return a structured SOAP note.
@@ -569,8 +627,17 @@ def run_pipeline(raw_text: str) -> dict:
     Steps:
     1. Run NER to extract medical entities
     2. Run urgency classifier to get triage level
+<<<<<<< HEAD
     3. Use OpenRouter LLM to generate professional SOAP sentences
     4. Fall back to structured entity-based generation if LLM is unavailable
+=======
+<<<<<<< HEAD
+    3. Map entities → S/O/A/P sections
+=======
+    3. Use OpenRouter LLM to generate professional SOAP sentences
+    4. Fall back to structured entity-based generation if LLM is unavailable
+>>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 
     Returns:
         {
@@ -581,6 +648,63 @@ def run_pipeline(raw_text: str) -> dict:
             "entities":      list,
             "urgency_level": str,
             "urgency_confidence": float,
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+        }
+    """
+    # Step 1 — Named Entity Recognition
+    entities = ner_extract(raw_text)
+
+    # Step 2 — Urgency classification
+    urgency = urgency_classify(raw_text)
+
+    # Step 3 — Group entities into SOAP sections
+    groups = _group_entities(entities)
+
+    # Step 4 — Optional: Extract numeric vitals for a "preliminary" risk score
+    # Look for patterns like "Heart Rate: 120", "BP 140/90", etc.
+    import re
+    text = raw_text.lower()
+    prelim_risk = None
+    try:
+        from ai.risk_scorer import predict
+        vitals_found = {}
+        
+        hr_match = re.search(r'(heart rate|hr|pulse|bpm)\D*(\d+)', text)
+        if hr_match: vitals_found["heart_rate"] = float(hr_match.group(2))
+        
+        spo2_match = re.search(r'(spo2|oxygen|o2)\D*(\d+)', text)
+        if spo2_match: vitals_found["spo2"] = float(spo2_match.group(2))
+        
+        bp_match = re.search(r'(bp|pressure)\D*(\d+)\D+(\d+)', text)
+        if bp_match:
+            vitals_found["blood_pressure_sys"] = float(bp_match.group(2))
+            vitals_found["blood_pressure_dia"] = float(bp_match.group(3))
+            
+        temp_match = re.search(r'(temp|temperature)\D*(\d+\.?\d*)', text)
+        if temp_match: vitals_found["temperature"] = float(temp_match.group(2))
+
+        # If we have enough for a guestimate
+        if len(vitals_found) >= 3:
+            # fill missing with defaults for a "best guess"
+            defaults = {"heart_rate": 75, "spo2": 98, "blood_pressure_sys": 120, "blood_pressure_dia": 80, "temperature": 36.6}
+            for k, v in defaults.items():
+                if k not in vitals_found: vitals_found[k] = v
+            prelim_risk = predict(vitals_found)
+    except Exception:
+        pass
+
+    def _join(items: list[str]) -> str:
+        return "; ".join(dict.fromkeys(items))  # dedupe, preserve order
+
+    return {
+        "subjective":         _join(groups["subjective"])  or raw_text[:300],
+        "objective":          _join(groups["objective"]),
+        "assessment":         _join(groups["assessment"]),
+        "plan":               _join(groups["plan"]),
+=======
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
             "preliminary_risk":   float | None,
         }
     """
@@ -619,8 +743,19 @@ def run_pipeline(raw_text: str) -> dict:
         "objective":          soap_formatted["objective"],
         "assessment":         soap_formatted["assessment"],
         "plan":               soap_formatted["plan"],
+<<<<<<< HEAD
+=======
+>>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
         "entities":           entities,
         "urgency_level":      urgency["label"],
         "urgency_confidence": urgency["confidence"],
         "preliminary_risk":   prelim_risk,
     }
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+
+=======
+>>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457

@@ -2,13 +2,20 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, AlertTriangle, Pill, UserCheck, Clock, ChevronRight, Stethoscope, HeartPulse, UserCircle2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+<<<<<<< HEAD
 import { getDashboardStats, getScheduleData, getTasks, getPatients, getTriageScoreHistory } from '../../api/services';
+=======
+import { getDashboardStats, getScheduleData, getTasks, getPatients } from '../../api/services';
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 import { useSimulatedVitals } from '../../hooks/useSimulatedVitals';
 import StatCard from '../ui/StatCard';
 import PatientCard from '../PatientCard';
 import VitalMiniCard from '../ui/VitalMiniCard';
 import ScheduleCard from '../ui/ScheduleCard';
+<<<<<<< HEAD
 import TriageChart from '../ui/TriageChart';
+=======
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 import '../Dashboard.css';
 
 export default function NurseDashboard() {
@@ -21,7 +28,10 @@ export default function NurseDashboard() {
   const [schedule, setSchedule] = useState({ days: [] });
   const [activeTasks, setActiveTasks] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
+<<<<<<< HEAD
   const [triageHistory, setTriageHistory] = useState([]);
+=======
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 
 
   // Live vitals
@@ -30,18 +40,28 @@ export default function NurseDashboard() {
   useEffect(() => {
     async function loadData() {
       try {
+<<<<<<< HEAD
         const [pts, st, sched, tks, history] = await Promise.all([
+=======
+        const [pts, st, sched, tks] = await Promise.all([
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
           getPatients(),
           getDashboardStats(),
           getScheduleData(),
           getTasks(),
+<<<<<<< HEAD
           getTriageScoreHistory()
+=======
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
         ]);
         setRawPatients(pts);
         setStats(st);
         setSchedule(sched);
         setActiveTasks(tks.filter((t) => t.status !== 'done'));
+<<<<<<< HEAD
         setTriageHistory(history);
+=======
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
         const assignedPts = pts.filter((p) => p.assignedNurses?.some((n) => n.id === user?.id) || p.assignedNurse === user?.name);
         if (assignedPts.length > 0) setSelectedPatient(assignedPts[0]);
         else setSelectedPatient(null);
@@ -56,6 +76,7 @@ export default function NurseDashboard() {
     loadData();
   }, []);
 
+<<<<<<< HEAD
   // Update history when patient changes
   useEffect(() => {
     if (selectedPatient) {
@@ -63,6 +84,8 @@ export default function NurseDashboard() {
     }
   }, [selectedPatient]);
 
+=======
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
   const currentPatient = selectedPatient
     ? patients.find((p) => p.id === selectedPatient.id) || selectedPatient
     : null;
@@ -120,6 +143,7 @@ export default function NurseDashboard() {
         {/* Schedule card */}
         <ScheduleCard schedule={schedule} />
 
+<<<<<<< HEAD
         {/* Triage Score Chart for Selected Patient */}
         {currentPatient && (
           <div style={{ marginTop: 24 }}>
@@ -130,6 +154,8 @@ export default function NurseDashboard() {
           </div>
         )}
 
+=======
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
         {/* Active tasks */}
         <div className="dashboard-tasks-row">
           <div className="dashboard-section-header">
@@ -201,7 +227,11 @@ export default function NurseDashboard() {
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}><UserCircle2 size={12} /> Profile</span>
                   <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Patient Profile</span>
                   <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+<<<<<<< HEAD
                     {currentPatient.age ? `${currentPatient.age} years old` : 'Unknown age'} • {currentPatient.weight ? `${currentPatient.weight} kg` : 'Unknown weight'}
+=======
+                    {currentPatient.gender === 'M' ? 'Male' : currentPatient.gender === 'F' ? 'Female' : 'Other'} • {currentPatient.age ? `${currentPatient.age} yrs` : 'Unknown age'} • {currentPatient.weight ? `${currentPatient.weight} kg` : '70 kg'}
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
                   </p>
                 </div>
                 <div style={{ background: 'var(--bg-main)', padding: 16, borderRadius: 12, border: '1px solid var(--border-default)' }}>

@@ -1,0 +1,22 @@
+# General
+.DS_Store
+.venv/
+node_modules/
+
+# Environment
+.env
+.env.local
+*.env
+
+# Databases
+*.db
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Project specific
+Backend/.env
+Frontend/.env
+triage_models.zip
