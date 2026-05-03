@@ -495,14 +495,39 @@ export async function deletePatient(patientId) {
 // ANALYTICS
 // ══════════════════════════════════════════════════════════════
 
-export async function getTriageScoreHistory() {
-  // This will come from your AI/ML team writing to a `triage_scores` table.
-  // Placeholder until backend provides it:
-  return [];
+export async function getTriageScoreHistory(patientId) {
+  // Mocking score history if no patientId or if we want demo data
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const currentMonth = new Date().getMonth();
+  
+  // Return last 6 months of data
+  return Array.from({ length: 6 }, (_, i) => {
+    const monthIdx = (currentMonth - 5 + i + 12) % 12;
+    // Generate a score that tends to increase or remain high for "critical" feel
+    const baseScore = patientId ? (70 + Math.random() * 25) : (60 + Math.random() * 20);
+    return {
+      month: months[monthIdx],
+      score: baseScore
+    };
+  });
 }
 
 export async function getScheduleData() {
-  return {};
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const today = new Date();
+  
+  const scheduleDays = Array.from({ length: 14 }, (_, i) => {
+    const date = new Date();
+    date.setDate(today.getDate() + i);
+    return {
+      day: days[date.getDay()],
+      date: date.getDate(),
+      tasks: Math.floor(Math.random() * 5),
+      active: i === 0
+    };
+  });
+
+  return { days: scheduleDays };
 }
 
 // ══════════════════════════════════════════════════════════════

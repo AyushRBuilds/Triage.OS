@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, AlertTriangle, Pill, UserCheck, Clock, ChevronRight, Stethoscope, HeartPulse, UserCircle2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getDashboardStats, getScheduleData, getTasks, getPatients } from '../../api/services';
+import { getDashboardStats, getScheduleData, getTasks, getPatients, getTriageScoreHistory } from '../../api/services';
 import { useSimulatedVitals } from '../../hooks/useSimulatedVitals';
 import StatCard from '../ui/StatCard';
 import PatientCard from '../PatientCard';
 import VitalMiniCard from '../ui/VitalMiniCard';
 import ScheduleCard from '../ui/ScheduleCard';
+import TriageChart from '../ui/TriageChart';
 import '../Dashboard.css';
 
 export default function NurseDashboard() {
@@ -20,6 +21,7 @@ export default function NurseDashboard() {
   const [schedule, setSchedule] = useState({ days: [] });
   const [activeTasks, setActiveTasks] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [triageHistory, setTriageHistory] = useState([]);
 
 
   // Live vitals
@@ -28,16 +30,18 @@ export default function NurseDashboard() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [pts, st, sched, tks] = await Promise.all([
+        const [pts, st, sched, tks, history] = await Promise.all([
           getPatients(),
           getDashboardStats(),
           getScheduleData(),
           getTasks(),
+          getTriageScoreHistory()
         ]);
         setRawPatients(pts);
         setStats(st);
         setSchedule(sched);
         setActiveTasks(tks.filter((t) => t.status !== 'done'));
+        setTriageHistory(history);
         const assignedPts = pts.filter((p) => p.assignedNurses?.some((n) => n.id === user?.id) || p.assignedNurse === user?.name);
         if (assignedPts.length > 0) setSelectedPatient(assignedPts[0]);
         else setSelectedPatient(null);
@@ -51,6 +55,13 @@ export default function NurseDashboard() {
     }
     loadData();
   }, []);
+
+  // Update history when patient changes
+  useEffect(() => {
+    if (selectedPatient) {
+      getTriageScoreHistory(selectedPatient.id).then(setTriageHistory);
+    }
+  }, [selectedPatient]);
 
   const currentPatient = selectedPatient
     ? patients.find((p) => p.id === selectedPatient.id) || selectedPatient
@@ -108,6 +119,16 @@ export default function NurseDashboard() {
       <div className="dashboard-right">
         {/* Schedule card */}
         <ScheduleCard schedule={schedule} />
+
+        {/* Triage Score Chart for Selected Patient */}
+        {currentPatient && (
+          <div style={{ marginTop: 24 }}>
+            <div className="dashboard-section-header">
+              <h3 className="text-card-title">{currentPatient.name.split(' ')[0]}'s Triage Trend</h3>
+            </div>
+            <TriageChart data={triageHistory} />
+          </div>
+        )}
 
         {/* Active tasks */}
         <div className="dashboard-tasks-row">
