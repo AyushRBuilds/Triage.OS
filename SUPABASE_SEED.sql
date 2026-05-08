@@ -7,9 +7,13 @@ INSERT INTO public.nurses (id, name, email, initials, role, ward, shift_type)
 VALUES 
   ('nurse-priya', 'Priya Mehta', 'priya@triage.os', 'PM', 'Senior Nurse', 'ICU Ward 3', 'Day'),
   ('nurse-kavita', 'Kavita Rao', 'kavita@triage.os', 'KR', 'Staff Nurse', 'ICU Ward 3', 'Day'),
+<<<<<<< HEAD
   ('nurse-deepak', 'Deepak Nair', 'deepak@triage.os', 'DN', 'Junior Nurse', 'ICU Ward 3', 'Day'),
   ('admin-demo', 'Admin User', 'admin@triage.os', 'AU', 'System Administrator', 'Hospital Admin', 'Day'),
   ('doctor-demo', 'Dr. Sharma', 'doctor@triage.os', 'DS', 'Attending Physician', 'ICU Ward 3', 'Day')
+=======
+  ('nurse-deepak', 'Deepak Nair', 'deepak@triage.os', 'DN', 'Junior Nurse', 'ICU Ward 3', 'Day')
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email;
 
 -- B. PATIENTS (Diverse Genders and Ages)

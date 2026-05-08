@@ -102,6 +102,7 @@ export async function getPatientById(id) {
 }
 
 export async function updatePatientVitals(patientId, vitals) {
+<<<<<<< HEAD
   const { data, error } = await supabase
     .from('vitals')
     .upsert({ patient_id: patientId, ...vitals, recorded_at: new Date().toISOString() }, {
@@ -110,6 +111,24 @@ export async function updatePatientVitals(patientId, vitals) {
 
   if (error) handleError(error, 'updatePatientVitals');
   return data;
+=======
+  // Now routing through our Python AI backend to get real-time risk scoring
+  const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/vitals`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      patient_id: patientId,
+      heart_rate: vitals.hr,
+      spo2: vitals.spo2,
+      blood_pressure_sys: vitals.bp_sys,
+      blood_pressure_dia: vitals.bp_dia,
+      temperature: vitals.temp,
+    }),
+  });
+
+  if (!res.ok) throw new Error('Failed to update vitals via AI backend');
+  return res.json();
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 }
 
 export async function addPatient(patient) {
@@ -342,6 +361,7 @@ export async function createSoapNote(note) {
   return data;
 }
 
+<<<<<<< HEAD
 export async function transcribeAudio(audioBlob) {
   // Still uses a backend endpoint — AI team will implement this
   const formData = new FormData();
@@ -351,6 +371,16 @@ export async function transcribeAudio(audioBlob) {
     body: formData,
   });
   if (!res.ok) throw new Error('Transcription failed');
+=======
+export async function processSoapRawText(text) {
+  // Call the AI backend (ML team endpoint) to run NER + Urgency Classifier
+  const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/soap/process_raw`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ raw_text: text }),
+  });
+  if (!res.ok) throw new Error('Failed to process SOAP text via AI pipeline');
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
   return res.json();
 }
 
@@ -372,6 +402,7 @@ export async function getChatHistory() {
   }));
 }
 
+<<<<<<< HEAD
 export async function sendChatMessage(message) {
   // Save user message first
   await supabase.from('chat_messages').insert([{ role: 'user', text: message }]);
@@ -381,11 +412,26 @@ export async function sendChatMessage(message) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message }),
+=======
+export async function sendChatMessage(message, patientId = null) {
+  // Save user message first (Supabase log)
+  await supabase.from('chat_messages').insert([{ role: 'user', text: message }]);
+
+  // Call the AI backend (ML team endpoint)
+  const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, patient_id: patientId }),
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
   });
 
   if (!res.ok) throw new Error('Chat request failed');
   const reply = await res.json();
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
   // Save AI response to DB
   const { data, error } = await supabase
     .from('chat_messages')
@@ -444,12 +490,17 @@ export async function confirmShiftSwapTransfer(requestId, responderId) {
   
   const requestorId = req.requestor_id;
 
+<<<<<<< HEAD
   // 2. Find all patients assigned to the requestor (both assignments and primary)
+=======
+  // 2. Find all patients assigned to the requestor
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
   const { data: requestorAssignments } = await supabase
     .from('patient_assignments')
     .select('patient_id')
     .eq('nurse_id', requestorId);
 
+<<<<<<< HEAD
   const { data: primaryPatients } = await supabase
     .from('patients')
     .select('id')
@@ -460,12 +511,15 @@ export async function confirmShiftSwapTransfer(requestId, responderId) {
     ...(primaryPatients || []).map(p => p.id)
   ]);
 
+=======
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
   // 3. Find all patients already assigned to the responder
   const { data: responderAssignments } = await supabase
     .from('patient_assignments')
     .select('patient_id')
     .eq('nurse_id', responderId);
 
+<<<<<<< HEAD
   const { data: responderPrimaryPatients } = await supabase
     .from('patients')
     .select('id')
@@ -478,6 +532,14 @@ export async function confirmShiftSwapTransfer(requestId, responderId) {
 
   // 4. Identify patients NOT shared
   const patientsToTransfer = Array.from(requestorPatientIds).filter(pid => !responderPatientIds.has(pid));
+=======
+  const responderPatientIds = new Set((responderAssignments || []).map(a => a.patient_id));
+
+  // 4. Identify patients NOT shared
+  const patientsToTransfer = (requestorAssignments || [])
+    .map(a => a.patient_id)
+    .filter(pid => !responderPatientIds.has(pid));
+>>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 
   // 5. Create temporary assignments for the non-shared patients
   const newAssignments = patientsToTransfer.map(pid => ({
