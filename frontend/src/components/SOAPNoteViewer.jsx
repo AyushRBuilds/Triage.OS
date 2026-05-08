@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useState, useEffect, useRef } from 'react';
 import { FileText as Note } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
@@ -589,7 +590,7 @@ export default function SOAPNoteViewer() {
               <div className="soap-live-transcript card animate-fade-in" style={{ marginTop: 24, padding: 20 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <span className="text-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Edit3 size={12} /> Type Raw Clinical Text</span>
-                    <button className="btn btn-ghost btn-sm" style={{ padding: 4 }} onClick={() => setShowManualInput(false)}><X size={16} /></button>
+                  <button className="btn btn-ghost btn-sm" style={{ padding: 4 }} onClick={() => setShowManualInput(false)}><X size={16} /></button>
                 </div>
                 <textarea
                   className="input"
@@ -634,20 +635,20 @@ export default function SOAPNoteViewer() {
       </div>
 
       {deleteConfirm && (
-        <div style={{position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center'}} onClick={() => setDeleteConfirm(null)}>
-          <div className="card animate-fade-in" style={{width: 320, padding: 24, textAlign: 'center', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16}} onClick={(e) => e.stopPropagation()}>
-            <div style={{marginBottom: 16, color: '#ef4444', display: 'flex', justifyContent: 'center'}}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setDeleteConfirm(null)}>
+          <div className="card animate-fade-in" style={{ width: 320, padding: 24, textAlign: 'center', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 16 }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ marginBottom: 16, color: '#ef4444', display: 'flex', justifyContent: 'center' }}>
               <AlertTriangle size={48} />
             </div>
-            <h3 style={{marginBottom: 8, fontSize: 18, fontWeight: 600, color: 'var(--text-main)'}}>Delete SOAP Note?</h3>
-            <p style={{marginBottom: 24, color: 'var(--text-muted)'}}>This action cannot be undone.</p>
-            <div style={{display: 'flex', gap: 12, justifyContent: 'center'}}>
-              <button className="btn btn-ghost" style={{flex: 1}} onClick={() => setDeleteConfirm(null)}>Cancel</button>
-              <button className="btn btn-primary" style={{flex: 1, background: '#ef4444', borderColor: '#ef4444', color: 'white'}} onClick={() => handleDeleteNote(deleteConfirm)}>Delete</button>
+            <h3 style={{ marginBottom: 8, fontSize: 18, fontWeight: 600, color: 'var(--text-main)' }}>Delete SOAP Note?</h3>
+            <p style={{ marginBottom: 24, color: 'var(--text-muted)' }}>This action cannot be undone.</p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => setDeleteConfirm(null)}>Cancel</button>
+              <button className="btn btn-primary" style={{ flex: 1, background: '#ef4444', borderColor: '#ef4444', color: 'white' }} onClick={() => handleDeleteNote(deleteConfirm)}>Delete</button>
             </div>
           </div>
         </div>
       )}
     </div>
   );
-}
+}
