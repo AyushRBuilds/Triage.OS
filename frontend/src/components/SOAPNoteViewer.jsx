@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { FileText as Note } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
@@ -287,6 +286,7 @@ export default function SOAPNoteViewer() {
       toast.error('Could not delete note: ' + (err.message || JSON.stringify(err)));
     }
   };
+
 
   const handleEditNote = (note) => {
     setEditingNote(note.id);

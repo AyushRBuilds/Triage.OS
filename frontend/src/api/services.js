@@ -451,11 +451,21 @@ export async function confirmShiftSwapTransfer(requestId, responderId) {
   
   const requestorId = req.requestor_id;
 
-  // 2. Find all patients assigned to the requestor
+  // 2. Find all patients assigned to the requestor (both assignments and primary)
   const { data: requestorAssignments } = await supabase
     .from('patient_assignments')
     .select('patient_id')
     .eq('nurse_id', requestorId);
+
+  const { data: primaryPatients } = await supabase
+    .from('patients')
+    .select('id')
+    .eq('assigned_nurse_id', requestorId);
+
+  const requestorPatientIds = new Set([
+    ...(requestorAssignments || []).map(a => a.patient_id),
+    ...(primaryPatients || []).map(p => p.id)
+  ]);
 
   // 3. Find all patients already assigned to the responder
   const { data: responderAssignments } = await supabase
@@ -463,12 +473,19 @@ export async function confirmShiftSwapTransfer(requestId, responderId) {
     .select('patient_id')
     .eq('nurse_id', responderId);
 
-  const responderPatientIds = new Set((responderAssignments || []).map(a => a.patient_id));
+  const { data: responderPrimaryPatients } = await supabase
+    .from('patients')
+    .select('id')
+    .eq('assigned_nurse_id', responderId);
+
+  const responderPatientIds = new Set([
+    ...(responderAssignments || []).map(a => a.patient_id),
+    ...(responderPrimaryPatients || []).map(p => p.id)
+  ]);
 
   // 4. Identify patients NOT shared
-  const patientsToTransfer = (requestorAssignments || [])
-    .map(a => a.patient_id)
-    .filter(pid => !responderPatientIds.has(pid));
+  const patientsToTransfer = Array.from(requestorPatientIds).filter(pid => !responderPatientIds.has(pid));
+
 
   // 5. Create temporary assignments for the non-shared patients
   const newAssignments = patientsToTransfer.map(pid => ({
