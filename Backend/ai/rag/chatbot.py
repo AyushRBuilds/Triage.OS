@@ -1,21 +1,6 @@
 """
 RAG Chatbot
 -----------
-<<<<<<< HEAD
-Combines the retriever with a generative LLM (via OpenRouter) to answer
-clinical questions grounded in retrieved context.
-
-Usage:
-    from ai.rag.chatbot import answer
-    reply, sources = answer("What is the treatment for hypertensive crisis?")
-"""
-import os
-import requests as http_requests
-from ai.rag.retriever import retrieve
-from typing import Tuple, List, Optional
-
-# ── OpenRouter config ─────────────────────────────────────────
-=======
 Combines retrieved clinical knowledge with a structured patient context.
 """
 import os
@@ -25,17 +10,12 @@ import requests as http_requests
 
 from ai.rag.retriever import retrieve
 
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3-super-120b-a12b:free")
 
 
 def _call_openrouter(messages: list[dict]) -> str | None:
-<<<<<<< HEAD
-    """Call the OpenRouter API and return the assistant's response text."""
-=======
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
     api_key = OPENROUTER_API_KEY or os.getenv("OPENROUTER_API_KEY", "")
     model = OPENROUTER_MODEL or os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3-super-120b-a12b:free")
 
@@ -65,58 +45,6 @@ def _call_openrouter(messages: list[dict]) -> str | None:
         return None
 
 
-<<<<<<< HEAD
-def generate_patient_summary(model_outputs: dict) -> str:
-    """
-    Combines outputs from multiple models into a text summary for the LLM.
-    
-    Expected model_outputs keys:
-        - transcript: str
-        - entities: list[dict]
-        - urgency_level: str
-        - risk_score: float
-    """
-    entities = model_outputs.get("entities", [])
-    symptoms = [e["text"] for e in entities if e["label"] == "SYMPTOM"]
-    meds = [e["text"] for e in entities if e["label"] == "DRUG"]
-    
-    summary = (
-        f"--- PATIENT CLINICAL CONTEXT ---\n"
-        f"Transcript: {model_outputs.get('transcript', 'N/A')}\n"
-        f"Detected Symptoms: {', '.join(symptoms) or 'None'}\n"
-        f"Detected Medications: {', '.join(meds) or 'None'}\n"
-        f"Triage Urgency: {model_outputs.get('urgency_level', 'Unknown')}\n"
-        f"ML Risk Score: {model_outputs.get('risk_score', 'Unknown')}\n"
-        f"--------------------------------"
-    )
-    return summary
-
-
-def answer(
-    question: str, 
-    patient_context: Optional[dict] = None, 
-    top_k: int = 5
-) -> Tuple[str, List[str]]:
-    """
-    Retrieve clinical guidelines and generate a grounded answer using 
-    OpenRouter LLM combined with patient model outputs.
-    """
-    # 1. Retrieve knowledge from FAISS index
-    chunks = retrieve(question, top_k=top_k)
-    doc_context = "\n\n".join(c["text"] for c in chunks)
-    sources = [c["text"][:120] + "…" for c in chunks]
-
-    # 2. Format clinical context from model outputs
-    clinical_summary = ""
-    if patient_context:
-        clinical_summary = generate_patient_summary(patient_context)
-
-    # 3. Construct messages for OpenRouter
-    system_msg = (
-        "You are a Triage Assistant in an Emergency Department. "
-        "Based on Clinical Guidelines and Patient Status, answer clinical questions. "
-        "Be concise and prioritize urgency."
-=======
 def _format_kv_block(title: str, values: dict) -> str:
     lines = []
     for key, value in values.items():
@@ -270,20 +198,13 @@ def answer(
         "Use the clinical context and retrieved guidelines to answer the nurse's question. "
         "Be concise, accurate, and prioritize urgency. "
         "If the patient-specific data does not contain the answer, say so clearly."
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
     )
 
     user_msg = (
         f"CLINICAL GUIDELINES:\n{doc_context}\n\n"
-<<<<<<< HEAD
-        f"{clinical_summary}\n\n"
-        f"USER QUESTION: {question}\n"
-        f"INSTRUCTION: Be concise and prioritize urgency."
-=======
         f"PATIENT CONTEXT:\n{clinical_summary}\n\n"
         f"USER QUESTION: {question}\n"
         f"INSTRUCTION: Answer from the patient context first, then the retrieved clinical guidelines."
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
     )
 
     messages = [
@@ -291,28 +212,10 @@ def answer(
         {"role": "user", "content": user_msg},
     ]
 
-<<<<<<< HEAD
-    # 4. Try OpenRouter
-=======
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
     reply = _call_openrouter(messages)
     if reply:
         return reply, sources
 
-<<<<<<< HEAD
-    # 5. Fallback: try local Ollama
-    OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
-    MODEL_NAME = os.getenv("OLLAMA_MODEL", "llama3")
-
-    prompt = (
-        f"You are a Triage Assistant in an Emergency Department.\n"
-        f"Based on the following Clinical Guidelines and Patient Status, answer the clinical question.\n\n"
-        f"CLINICAL GUIDELINES:\n{doc_context}\n\n"
-        f"{clinical_summary}\n\n"
-        f"USER QUESTION: {question}\n"
-        f"INSTRUCTION: Be concise and prioritize urgency.\n"
-        f"ANSWER:"
-=======
     ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
     ollama_model = os.getenv("OLLAMA_MODEL", "llama3")
     prompt = (
@@ -323,24 +226,13 @@ def answer(
         f"USER QUESTION: {question}\n"
         "INSTRUCTION: Answer from the patient context first, then the guidelines.\n"
         "ANSWER:"
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
     )
 
     try:
         response = http_requests.post(
-<<<<<<< HEAD
-            OLLAMA_URL,
-            json={
-                "model": MODEL_NAME,
-                "prompt": prompt,
-                "stream": False
-            },
-            timeout=5
-=======
             ollama_url,
             json={"model": ollama_model, "prompt": prompt, "stream": False},
             timeout=60,
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
         )
         if response.status_code == 200:
             return response.json().get("response", "No response from Ollama"), sources

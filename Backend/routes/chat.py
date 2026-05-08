@@ -1,12 +1,9 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional
-<<<<<<< HEAD
-=======
 import os
 import re
 from datetime import datetime
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 
 router = APIRouter()
 
@@ -27,8 +24,6 @@ from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException
 from models import Patient, SOAPNote, Vital
 
-<<<<<<< HEAD
-=======
 
 def _get_supabase_client():
     try:
@@ -240,7 +235,7 @@ def _load_patient_context_from_local_db(db: Session, patient_id: int):
         "patient_id": patient_id,
     }
 
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
+
 @router.post("/")
 async def chat(payload: ChatMessage, db: Session = Depends(get_db)):
     """
@@ -248,25 +243,6 @@ async def chat(payload: ChatMessage, db: Session = Depends(get_db)):
     Retrieves latest patient context from DB and hands it to Ollama.
     """
     patient_context_data = None
-<<<<<<< HEAD
-    
-    if payload.patient_id:
-        # Fetch latest info for this patient to build a context block
-        patient = db.query(Patient).filter(Patient.id == payload.patient_id).first()
-        if patient:
-            # Get latest SOAP note (for NER/Urgency)
-            soap = db.query(SOAPNote).filter(SOAPNote.patient_id == payload.patient_id).order_by(SOAPNote.created_at.desc()).first()
-            # Get latest vitals (for Risk)
-            vital = db.query(Vital).filter(Vital.patient_id == payload.patient_id).order_by(Vital.recorded_at.desc()).first()
-            
-            patient_context_data = {
-                "transcript": soap.raw_text if soap else "N/A",
-                "entities": soap.entities if soap and hasattr(soap, 'entities') else [],
-                "urgency_level": soap.subjective if soap else "N/A", # Or fetch from a specific field
-                "risk_score": vital.risk_score if vital else 0.0,
-            }
-            
-=======
 
     if payload.patient_id is not None:
         patient_context_data = _load_patient_context_from_supabase(payload.message, payload.patient_id)
@@ -275,11 +251,9 @@ async def chat(payload: ChatMessage, db: Session = Depends(get_db)):
     else:
         patient_context_data = _load_patient_context_from_supabase(payload.message, None)
 
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
     reply, sources = answer(payload.message, patient_context=patient_context_data)
     
     return {
         "text": reply,
         "source": "; ".join(sources) if sources else "Clinical Knowledge Base"
     }
-

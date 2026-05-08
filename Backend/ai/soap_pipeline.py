@@ -1,30 +1,13 @@
 """
 SOAP Pipeline
 -------------
-<<<<<<< HEAD
 Connects the NER model, urgency classifier, and OpenRouter LLM to produce
-=======
-<<<<<<< HEAD
-Connects the NER model and urgency classifier to produce
-=======
-Connects the NER model, urgency classifier, and OpenRouter LLM to produce
->>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 structured SOAP notes from raw clinical text.
 
 Usage:
     from ai.soap_pipeline import run_pipeline
     result = run_pipeline("Patient complains of chest pain...")
 """
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-from ai.ner_model import extract as ner_extract
-from ai.urgency_classifier import classify as urgency_classify
-
-# Entity labels that map to each SOAP section
-=======
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 import os
 import re
 import json
@@ -42,10 +25,6 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3-super-120b-a12b:free")
 
 # Entity labels that map to each SOAP section (used as fallback)
-<<<<<<< HEAD
-=======
->>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 _SUBJECTIVE_LABELS  = {"SYMPTOM", "COMPLAINT", "HISTORY", "DURATION"}
 _OBJECTIVE_LABELS   = {"VITAL", "LAB", "MEASUREMENT", "TEST", "FINDING"}
 _ASSESSMENT_LABELS  = {"DISEASE", "CONDITION", "DIAGNOSIS", "DISORDER"}
@@ -53,15 +32,7 @@ _PLAN_LABELS        = {"DRUG", "TREATMENT", "PROCEDURE", "MEDICATION", "DOSAGE"}
 
 
 def _group_entities(entities: list[dict]) -> dict[str, list[str]]:
-<<<<<<< HEAD
     """Sort extracted entities into SOAP buckets (fallback method)."""
-=======
-<<<<<<< HEAD
-    """Sort extracted entities into SOAP buckets."""
-=======
-    """Sort extracted entities into SOAP buckets (fallback method)."""
->>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
     groups: dict[str, list[str]] = {
         "subjective": [], "objective": [], "assessment": [], "plan": [], "other": []
     }
@@ -80,11 +51,6 @@ def _group_entities(entities: list[dict]) -> dict[str, list[str]]:
     return groups
 
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 def _call_openrouter(messages: list[dict], json_mode: bool = False, timeout: int = 60) -> str | None:
     """
     Call the OpenRouter API with the given messages.
@@ -204,11 +170,7 @@ def _format_soap_with_llm(raw_text: str, entities: list[dict], urgency: dict) ->
 
     Returns dict with 'subjective', 'objective', 'assessment', 'plan'
     or None if the LLM call fails completely.
-    
-    Accepts partial results — fills in missing sections with contextual defaults
-    rather than discarding the entire response.
     """
-    # Build entity context string for the prompt
     entity_summary = ", ".join(
         f"{e['text']} ({e['label']})" for e in entities
     ) if entities else "None extracted"
@@ -247,7 +209,6 @@ Respond with ONLY this JSON (fill in the quoted values):
         {"role": "user", "content": user_prompt},
     ]
 
-    # Attempt 1
     raw_response = _call_openrouter(messages, json_mode=True, timeout=60)
     if raw_response:
         result = _parse_llm_json(raw_response)
@@ -258,7 +219,6 @@ Respond with ONLY this JSON (fill in the quoted values):
                 logger.info("LLM SOAP formatting successful (attempt 1)")
                 return soap
 
-    # Attempt 2 — retry with slightly higher temperature
     logger.info("LLM attempt 1 failed, retrying...")
     raw_response = _call_openrouter(messages, json_mode=False, timeout=60)
     if raw_response:
@@ -279,25 +239,18 @@ def _validate_and_fill_soap(
     entities: list[dict],
     urgency: dict,
 ) -> dict | None:
-    """
-    Validate an LLM result dict and fill in any missing/empty sections
-    with contextual defaults rather than rejecting the whole response.
-    """
     if not isinstance(result, dict):
         return None
 
-    # Check if we have at least one valid section
     valid_count = 0
     for key in ("subjective", "objective", "assessment", "plan"):
         val = _as_str(result.get(key))
         if val:
             valid_count += 1
 
-    # If no valid sections at all, this response is useless
     if valid_count == 0:
         return None
 
-    # Build contextual fallbacks for missing sections
     groups = _group_entities(entities)
     urgency_label = urgency.get("label", "Unknown")
     urgency_conf = urgency.get("confidence", 0)
@@ -362,42 +315,32 @@ def _build_structured_fallback(
     entities: list[dict],
     urgency: dict,
 ) -> dict:
-    """
-    Build a structured SOAP note from NER entities and raw text
-    when the LLM is completely unavailable. Produces readable clinical
-    sentences instead of raw entity dumps.
-    """
     groups = _group_entities(entities)
     urgency_label = urgency.get("label", "Unknown")
     urgency_conf = urgency.get("confidence", 0)
 
-    symptoms = list(dict.fromkeys(groups["subjective"]))  # deduplicate, preserve order
+    symptoms = list(dict.fromkeys(groups["subjective"]))
     vitals = list(dict.fromkeys(groups["objective"]))
     conditions = list(dict.fromkeys(groups["assessment"]))
     treatments = list(dict.fromkeys(groups["plan"]))
 
-    # ── Subjective ──
     if symptoms:
         s_text = f"Patient presents with {', '.join(symptoms)}."
     else:
-        # Use first portion of raw text as context
         s_text = f"Patient presents with the following concern: {raw_text[:250].strip()}."
     age = _age_snippet_from_text(raw_text)
     if age and age not in s_text:
         s_text = f"{age} patient. {s_text}"
 
-    # ── Objective ──
     if vitals:
         o_text = f"Documented findings: {', '.join(vitals)}. Complete assessment pending."
     else:
-        # Try to extract vitals from raw text with regex
         extracted = _extract_vitals_text(raw_text)
         if extracted:
             o_text = f"Documented vitals: {extracted}. Full physical examination pending."
         else:
             o_text = "Vital signs and physical examination findings to be documented."
 
-    # ── Assessment ──
     if conditions:
         a_text = (
             f"Clinical impression suggests {', '.join(conditions)}. "
@@ -410,7 +353,6 @@ def _build_structured_fallback(
             f"Further diagnostic workup required."
         )
 
-    # ── Plan ──
     if treatments:
         p_text = (
             f"Initiate: {', '.join(treatments)}. "
@@ -431,7 +373,6 @@ def _build_structured_fallback(
 
 
 def _extract_vitals_text(raw_text: str) -> str:
-    """Extract vitals from raw text using regex and format them properly."""
     text = raw_text.lower()
     found: list[str] = []
     seen: set[str] = set()
@@ -441,14 +382,12 @@ def _extract_vitals_text(raw_text: str) -> str:
             seen.add(s)
             found.append(s)
 
-    # HR: "heart rate 140", "140 PPM" (STT)
     m = re.search(r'(?:heart rate|hr|pulse)\D*(\d{2,3})', text) or re.search(
         r'(\d{2,3})\s*ppm(?!\s*%)', text, re.I,
     )
     if m and 20 <= int(m.group(1)) <= 250:
         add(f"HR {m.group(1)} bpm")
 
-    # BP: "BP/VP/pressure" + 90/60; "VP" often from speech for vitals/pressure
     m = re.search(
         r'(?:^|\s)(?:bp|vp|blood pressure|pressure)\s*(\d{2,3})\s*/\s*(\d{2,3})', text, re.I,
     )
@@ -456,17 +395,7 @@ def _extract_vitals_text(raw_text: str) -> str:
         a, b = int(m.group(1)), int(m.group(2))
         if 40 <= a <= 300 and 20 <= b <= 200 and a > b - 20:
             add(f"BP {a}/{b} mmHg")
-    if "BP" not in seen:
-        m = re.search(
-            r'(?:^|[^\d])(\d{2,3})\s*/\s*(\d{2,3})(?=\s*(?:temp|t\.|suspe|hr|and\s+success|and\s+immediate|\s*and\s*immediate|$))',
-            text,
-        )
-        if m:
-            a, b = int(m.group(1)), int(m.group(2))
-            if 50 <= a <= 220 and 30 <= b <= 120 and a > b - 5:
-                add(f"BP {a}/{b} mmHg")
 
-    # SpO2: include garbled STT e.g. "sp or to 82" for SpO2
     m = re.search(
         r'(?:spo2|sp\s*o2|sats?|oxygen)\D{0,12}(\d{1,3})\s*%',
         text, re.I,
@@ -495,7 +424,6 @@ def _extract_vitals_text(raw_text: str) -> str:
 
 
 def _extract_assessment_from_text(text: str) -> str:
-    """Pull assessment-style phrases from free text (e.g. suspected diagnosis)."""
     t = text.strip()
     m = re.search(
         r'(?:suspected|suspicious for|impression[:\s]+|likely)\s+([^.;\n]+?)(?=\s+(?:and|immediate|iv|ct|order|started|\.))',
@@ -509,7 +437,6 @@ def _extract_assessment_from_text(text: str) -> str:
 
 
 def _extract_plan_from_text(text: str) -> str:
-    """Heuristic extraction of plan elements from noisy speech-to-text."""
     hints = []
     t = text.lower()
     if re.search(r'\biv\s+flui?d?|intravenous\s+flui?d?|i\.?\s*v\.?\s*fluid', t):
@@ -529,9 +456,6 @@ def _finalize_soap(
     entities: list[dict],
     urgency: dict,
 ) -> dict:
-    """
-    Never return empty/None sections; merge regex-derived vitals; append transcript hints for A/P.
-    """
     fb = _build_structured_fallback(raw_text, entities, urgency)
     out: dict[str, str] = {}
     for k in ("subjective", "objective", "assessment", "plan"):
@@ -559,7 +483,6 @@ def _finalize_soap(
 
 
 def _extract_prelim_risk(raw_text: str) -> float | None:
-    """Extract numeric vitals from text and compute a preliminary risk score."""
     text = raw_text.lower()
     prelim_risk = None
     try:
@@ -580,7 +503,6 @@ def _extract_prelim_risk(raw_text: str) -> float | None:
         temp_match = re.search(r'(temp|temperature)\D*(\d+\.?\d*)', text)
         if temp_match: vitals_found["temperature"] = float(temp_match.group(2))
 
-        # If we have enough vitals for a reasonable estimate
         if len(vitals_found) >= 3:
             defaults = {
                 "heart_rate": 75, "spo2": 98,
@@ -596,126 +518,30 @@ def _extract_prelim_risk(raw_text: str) -> float | None:
     return prelim_risk
 
 
-<<<<<<< HEAD
-=======
->>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 def run_pipeline(raw_text: str) -> dict:
     """
     Process raw clinical text and return a structured SOAP note.
-
-    Steps:
-    1. Run NER to extract medical entities
-    2. Run urgency classifier to get triage level
-<<<<<<< HEAD
-    3. Use OpenRouter LLM to generate professional SOAP sentences
-    4. Fall back to structured entity-based generation if LLM is unavailable
-=======
-<<<<<<< HEAD
-    3. Map entities → S/O/A/P sections
-=======
-    3. Use OpenRouter LLM to generate professional SOAP sentences
-    4. Fall back to structured entity-based generation if LLM is unavailable
->>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
-
-    Returns:
-        {
-            "subjective":    str,
-            "objective":     str,
-            "assessment":    str,
-            "plan":          str,
-            "entities":      list,
-            "urgency_level": str,
-            "urgency_confidence": float,
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-        }
     """
-    # Step 1 — Named Entity Recognition
-    entities = ner_extract(raw_text)
-
-    # Step 2 — Urgency classification
-    urgency = urgency_classify(raw_text)
-
-    # Step 3 — Group entities into SOAP sections
-    groups = _group_entities(entities)
-
-    # Step 4 — Optional: Extract numeric vitals for a "preliminary" risk score
-    # Look for patterns like "Heart Rate: 120", "BP 140/90", etc.
-    import re
-    text = raw_text.lower()
-    prelim_risk = None
-    try:
-        from ai.risk_scorer import predict
-        vitals_found = {}
-        
-        hr_match = re.search(r'(heart rate|hr|pulse|bpm)\D*(\d+)', text)
-        if hr_match: vitals_found["heart_rate"] = float(hr_match.group(2))
-        
-        spo2_match = re.search(r'(spo2|oxygen|o2)\D*(\d+)', text)
-        if spo2_match: vitals_found["spo2"] = float(spo2_match.group(2))
-        
-        bp_match = re.search(r'(bp|pressure)\D*(\d+)\D+(\d+)', text)
-        if bp_match:
-            vitals_found["blood_pressure_sys"] = float(bp_match.group(2))
-            vitals_found["blood_pressure_dia"] = float(bp_match.group(3))
-            
-        temp_match = re.search(r'(temp|temperature)\D*(\d+\.?\d*)', text)
-        if temp_match: vitals_found["temperature"] = float(temp_match.group(2))
-
-        # If we have enough for a guestimate
-        if len(vitals_found) >= 3:
-            # fill missing with defaults for a "best guess"
-            defaults = {"heart_rate": 75, "spo2": 98, "blood_pressure_sys": 120, "blood_pressure_dia": 80, "temperature": 36.6}
-            for k, v in defaults.items():
-                if k not in vitals_found: vitals_found[k] = v
-            prelim_risk = predict(vitals_found)
-    except Exception:
-        pass
-
-    def _join(items: list[str]) -> str:
-        return "; ".join(dict.fromkeys(items))  # dedupe, preserve order
-
-    return {
-        "subjective":         _join(groups["subjective"])  or raw_text[:300],
-        "objective":          _join(groups["objective"]),
-        "assessment":         _join(groups["assessment"]),
-        "plan":               _join(groups["plan"]),
-=======
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
-            "preliminary_risk":   float | None,
-        }
-    """
-    # Step 1 — Named Entity Recognition
     try:
         entities = ner_extract(raw_text)
     except Exception as e:
         logger.error(f"NER extraction failed: {e}")
         entities = []
 
-    # Step 2 — Urgency classification (ML model; on failure use keyword/heuristic fallback).
-    # Import lazily so a missing torch/transformers does not break the whole pipeline.
     try:
         from ai.urgency_classifier import classify as _urgency_classify
         urgency = _urgency_classify(raw_text)
     except Exception as e:
-        logger.warning("Urgency ML classifier failed (%s) — using heuristic triage", e, exc_info=False)
+        logger.warning("Urgency ML classifier failed (%s) — using heuristic triage", e)
         urgency = classify_urgency_heuristic(raw_text)
 
-    # Step 3 — Use OpenRouter LLM to produce proper SOAP sentences
     soap_formatted = _format_soap_with_llm(raw_text, entities, urgency)
 
-    # Step 4 — Fallback: build structured sentences from NER entities + raw text
     if soap_formatted is None:
         logger.info("LLM unavailable — using structured entity-based fallback")
         soap_formatted = _build_structured_fallback(raw_text, entities, urgency)
 
-    # Step 4b — Ensure all sections are populated, merge vitals, apply transcript heuristics
     soap_formatted = _finalize_soap(soap_formatted, raw_text, entities, urgency)
-
-    # Step 5 — Extract preliminary risk score from vitals in text
     prelim_risk = _extract_prelim_risk(raw_text)
 
     return {
@@ -723,19 +549,8 @@ def run_pipeline(raw_text: str) -> dict:
         "objective":          soap_formatted["objective"],
         "assessment":         soap_formatted["assessment"],
         "plan":               soap_formatted["plan"],
-<<<<<<< HEAD
-=======
->>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
         "entities":           entities,
         "urgency_level":      urgency["label"],
         "urgency_confidence": urgency["confidence"],
         "preliminary_risk":   prelim_risk,
     }
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-
-=======
->>>>>>> 6b21ab91cf2faf394c7cdbc3ccc0ad575b12609b
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457

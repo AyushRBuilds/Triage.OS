@@ -5,11 +5,7 @@ load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import Base, engine
-<<<<<<< HEAD
-from routes import patients, vitals, kanban, soap
-=======
 from routes import patients, vitals, kanban, soap, chat
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 from contextlib import asynccontextmanager
 import threading
 
@@ -59,16 +55,11 @@ app.include_router(patients.router, prefix="/patients", tags=["Patients"])
 app.include_router(vitals.router,   prefix="/vitals",   tags=["Vitals"])
 app.include_router(kanban.router,   prefix="/kanban",   tags=["Kanban"])
 app.include_router(soap.router,     prefix="/soap",     tags=["SOAP"])
-<<<<<<< HEAD
-
 try:
     from routes import chat
     app.include_router(chat.router, prefix="/chat", tags=["Chat"])
 except ImportError as e:
     logger.warning("RAG chat disabled (missing optional dependency): %s", e)
-=======
-app.include_router(chat.router,     prefix="/chat",     tags=["Chat"])
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 
 @app.get("/")
 def root():

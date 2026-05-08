@@ -15,12 +15,12 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 async function seed() {
   console.log('Seeding Nurses...');
   const nursesData = [
-    { name: 'Priya Mehta', email: 'priya@triage.os', initials: 'PM', ward: 'ICU Ward 3', shift_type: 'Day', max_capacity: 8, role: 'Senior Nurse' },
-    { name: 'Kavita Rao', email: 'kavita@triage.os', initials: 'KR', ward: 'ICU Ward 3', shift_type: 'Day', max_capacity: 8, role: 'Staff Nurse' },
-    { name: 'Deepak Nair', email: 'deepak@triage.os', initials: 'DN', ward: 'ICU Ward 3', shift_type: 'Night', max_capacity: 8, role: 'Junior Nurse' },
-    { name: 'Ramesh Gupta', email: 'ramesh@triage.os', initials: 'RG', ward: 'ICU Ward 2', shift_type: 'Night', max_capacity: 8, role: 'Senior Nurse' },
-    { name: 'Sunita Mishra', email: 'sunita@triage.os', initials: 'SM', ward: 'General Ward 1', shift_type: 'Day', max_capacity: 8, role: 'Staff Nurse' },
-    { name: 'Anil Joshi', email: 'anil@triage.os', initials: 'AJ', ward: 'ICU Ward 3', shift_type: 'Night', max_capacity: 8, role: 'Junior Nurse' }
+    { id: 'nurse-priya', name: 'Priya Mehta', email: 'priya@triage.os', initials: 'PM', ward: 'ICU Ward 3', shift_type: 'Day', max_capacity: 8, role: 'Senior Nurse' },
+    { id: 'nurse-kavita', name: 'Kavita Rao', email: 'kavita@triage.os', initials: 'KR', ward: 'ICU Ward 3', shift_type: 'Day', max_capacity: 8, role: 'Staff Nurse' },
+    { id: 'nurse-deepak', name: 'Deepak Nair', email: 'deepak@triage.os', initials: 'DN', ward: 'ICU Ward 3', shift_type: 'Night', max_capacity: 8, role: 'Junior Nurse' },
+    { id: 'nurse-ramesh', name: 'Ramesh Gupta', email: 'ramesh@triage.os', initials: 'RG', ward: 'ICU Ward 2', shift_type: 'Night', max_capacity: 8, role: 'Senior Nurse' },
+    { id: 'nurse-sunita', name: 'Sunita Mishra', email: 'sunita@triage.os', initials: 'SM', ward: 'General Ward 1', shift_type: 'Day', max_capacity: 8, role: 'Staff Nurse' },
+    { id: 'nurse-anil', name: 'Anil Joshi', email: 'anil@triage.os', initials: 'AJ', ward: 'ICU Ward 3', shift_type: 'Night', max_capacity: 8, role: 'Junior Nurse' }
   ];
 
   const { data: nurses, error: errN } = await supabase.from('nurses').insert(nursesData).select();

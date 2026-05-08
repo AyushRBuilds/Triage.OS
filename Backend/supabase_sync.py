@@ -26,15 +26,9 @@ def sync_vitals_to_supabase(patient_id, vitals_data):
     if not client:
         return
         
-<<<<<<< HEAD
-    # Mapping our internal names to Supabase column names
-    # internal: heart_rate, blood_pressure_sys, blood_pressure_dia, spo2, temperature, risk_score
-    # supabase: hr, bp_sys, bp_dia, spo2, temp, risk (Note: check these in services.js normalizePatient)
-=======
-    # Mapping internal names to Supabase column names.
+    # Mapping internal names to Supabase column names
     # internal: heart_rate, blood_pressure_sys, blood_pressure_dia, spo2, temperature
     # supabase: heart_rate, bp_sys, bp_dia, spo2, temperature
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
     
     payload = {
         "patient_id": patient_id,

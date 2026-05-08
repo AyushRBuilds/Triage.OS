@@ -8,19 +8,11 @@ Usage:
     from ai.rag.retriever import retrieve
     results = retrieve("what are signs of sepsis?", top_k=3)
 """
+import pickle
 from pathlib import Path
 from typing import List, Dict
 
 INDEX_PATH = Path(__file__).parent / "faiss_index"
-
-<<<<<<< HEAD
-
-import faiss
-import pickle
-import numpy as np
-from sentence_transformers import SentenceTransformer
-=======
-import pickle
 
 try:
     import faiss
@@ -31,7 +23,6 @@ try:
     from sentence_transformers import SentenceTransformer
 except Exception:
     SentenceTransformer = None
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 
 _model = None
 _index = None
@@ -39,12 +30,9 @@ _texts = None
 
 def _load_resources():
     global _model, _index, _texts
-<<<<<<< HEAD
-=======
     if faiss is None or SentenceTransformer is None:
         return
 
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
     if _model is None:
         _model = SentenceTransformer('all-MiniLM-L6-v2')
     if _index is None:
@@ -66,14 +54,10 @@ def retrieve(query: str, top_k: int = 5) -> List[Dict]:
         List of dicts: [{"text": str, "score": float}, ...]
     """
     _load_resources()
-<<<<<<< HEAD
-    
-=======
 
     if faiss is None or SentenceTransformer is None:
         return []
 
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
     if _index is None or _texts is None:
         return []
 

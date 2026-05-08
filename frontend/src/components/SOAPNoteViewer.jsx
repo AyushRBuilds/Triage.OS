@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import { useState, useEffect, useRef } from 'react';
 import { FileText as Note } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';

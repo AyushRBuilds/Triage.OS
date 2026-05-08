@@ -222,15 +222,12 @@ img {
   white-space: nowrap;
 }
 
-<<<<<<< HEAD
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
 }
 
-=======
->>>>>>> 8a87fa11abdc5fd0880da3f1ad9e18864d4c2457
 .btn-primary {
   background: var(--green-primary);
   color: var(--text-primary);
